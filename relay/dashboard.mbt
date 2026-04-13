@@ -27,7 +27,7 @@ pub fn[T] Dashboard::render(self : Dashboard[T]) -> Unit {
 }
 
 ///| start_auto_render avvia un ciclo infinito di renderizzazione.
-pub async fn[T] Dashboard::start_auto_render(self : Dashboard[T]) -> Unit {
+pub fn[T] Dashboard::start_auto_render(self : Dashboard[T]) -> Unit {
   for ;; {
     self.render()
   }
