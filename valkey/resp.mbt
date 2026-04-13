@@ -23,7 +23,7 @@ pub struct RespParser[R] {
 }
 
 ///| new creates a new RespParser from any object implementing @io.Reader.
-pub fn[R : @io.Reader] RespParser::new(reader : R) -> RespParser[R] {
+pub fn[R] RespParser::new(reader : R) -> RespParser[R] {
   { reader: reader }
 }
 
