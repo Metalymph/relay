@@ -1,9 +1,9 @@
 {
-  "name": "username/relay",
+  "name": "metalymph/relay",
   "version": "0.1.0",
   "deps": {
     "moonbitlang/async": "0.17.1",
-    "username/valkey": "0.1.0"
+    "metalymph/valkey": "0.1.0"
   },
   "readme": "README.mbt.md",
   "repository": "",
