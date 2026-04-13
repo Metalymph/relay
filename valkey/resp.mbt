@@ -7,7 +7,7 @@ pub enum RespValue {
   Array(Option[Array[RespValue]])
 } derive(Debug, ToJson)
 
-///| RespError represents errors during RESP parsing.
+///| RespError represents errors occurring during RESP parsing.
 pub suberror RespError {
   ///| InvalidPrefix occurs when a message does not start with a recognized RESP character.
   InvalidPrefix(Int)
@@ -22,7 +22,7 @@ pub struct RespParser[R] {
   reader : R
 }
 
-///| new creates a new RespParser from any object implementing @io.Reader.
+///| new creates a new RespParser from an object implementing @io.Reader.
 pub fn[R] RespParser::new(reader : R) -> RespParser[R] {
   { reader: reader }
 }
@@ -83,7 +83,7 @@ pub async fn[R : @io.Reader] RespParser::parse_value(self : RespParser[R]) -> Re
         } catch {
           _ => raise UnexpectedEndOfStream
         }
-        // Consume \r\n
+        // Consume tailing \r\n
         let _ = self.read_byte() // \r
         let _ = self.read_byte() // \n
         BulkString(Some(@utf8.decode(buf)))
