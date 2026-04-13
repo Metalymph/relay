@@ -1,22 +1,34 @@
-async fn run_demo() -> Unit {
-  let backend = @relay.InMemoryBackend::new(10)
-  let q = backend.to_relay_queue()
+async fn main {
+  let backend = @relay.InMemoryBackend::new(100, policy=@relay.RetryPolicy::new(1))
+  let queue = backend.to_relay_queue()
+  let dashboard = @relay.Dashboard::new(queue, backend)
   
   try {
-    q.push("Hello, V2!")
-    q.push("MoonBit Async Relay")
+    // Puschiamo 10 messaggi
+    for i = 1; i <= 10; i = i + 1 {
+      queue.push("Msg \{i}")
+    }
     
-    let msg1 = q.pop()
-    println("Received (ID \{msg1.id}): \{msg1.payload}")
+    // 3 In-Flight
+    let _ = queue.pop()
+    let _ = queue.pop()
+    let _ = queue.pop()
     
-    let msg2 = q.pop()
-    println("Received (ID \{msg2.id}): \{msg2.payload}")
+    // 2 in DLQ (max_attempts = 1)
+    let m1 = queue.pop()
+    queue.nack(m1.id)
+    let m2 = queue.pop()
+    queue.nack(m2.id)
+    
+    // Risultato atteso: 
+    // In coda: 10 - 3 - 2 = 5
+    // In-Flight: 3
+    // DLQ: 2
+    
+    dashboard.render()
+    
+    println("\nDemo Mixed State completata!")
   } catch {
-    _ => println("Error in demo")
+    e => println("Errore: \{e}")
   }
-}
-
-fn main {
-  ignore(run_demo)
-  println("Relay V2 is ready!")
 }
