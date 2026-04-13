@@ -8,11 +8,9 @@ async test "worker_pool_concurrency" {
   
   let pool = WorkerPool::new(queue, concurrency=2)
   
-  @async.with_task_group(async fn(tg) {
+  @async.with_task_group((tg) => {
     tg.spawn_bg(async fn() {
-      pool.run(async fn(_payload) {
-        // Simulating work
-      })
+      pool.run((_payload) => ())
     })
     
     // Give workers time to process
@@ -33,9 +31,9 @@ async test "worker_pool_nack_on_error" {
   
   let pool = WorkerPool::new(queue, concurrency=1)
   
-  @async.with_task_group(async fn(tg) {
+  @async.with_task_group((tg) => {
     tg.spawn_bg(async fn() {
-      pool.run(async fn(payload) {
+      pool.run((payload) => {
         if payload == "fail" {
           raise QueueError::OperationFailed("Processing failed")
         }

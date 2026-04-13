@@ -35,7 +35,7 @@ async test "resp_parse_simple_string" {
 async test "resp_parse_integer" {
   let reader = FixedReader::new(":1000\r\n")
   let parser = RespParser::new(reader)
-  let val = parser.parse_value()
+  let val = try { parser.parse_value() } catch { e => fail("Failed: \{e}") }
   match val {
     Integer(i) => assert_eq(i, 1000L)
     _ => fail("Expected Integer")
@@ -45,7 +45,7 @@ async test "resp_parse_integer" {
 async test "resp_parse_bulk_string" {
   let reader = FixedReader::new("$6\r\nfoobar\r\n")
   let parser = RespParser::new(reader)
-  let val = parser.parse_value()
+  let val = try { parser.parse_value() } catch { e => fail("Failed: \{e}") }
   match val {
     BulkString(Some(s)) => assert_eq(s, "foobar")
     _ => fail("Expected BulkString")
@@ -55,7 +55,7 @@ async test "resp_parse_bulk_string" {
 async test "resp_parse_array" {
   let reader = FixedReader::new("*2\r\n$3\r\nfoo\r\n$3\r\nbar\r\n")
   let parser = RespParser::new(reader)
-  let val = parser.parse_value()
+  let val = try { parser.parse_value() } catch { e => fail("Failed: \{e}") }
   match val {
     Array(Some(arr)) => {
       assert_eq(arr.length(), 2)

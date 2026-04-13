@@ -39,3 +39,18 @@ pub async fn Client::send_command(self : Client, args : Array[String]) -> Unit r
     e => raise ConnectionError("Write failed: \{e}")
   }
 }
+
+///|
+#cfg(target="native")
+fn _dummy_use_native() -> Unit {
+  let _ : @socket.IpProtocolPreference? = None
+  let _ : @async.RetryMethod? = None
+  ()
+}
+
+///|
+#cfg(not(target="native"))
+fn _dummy_use_non_native() -> Unit {
+  let _ : @async.RetryMethod? = None
+  ()
+}

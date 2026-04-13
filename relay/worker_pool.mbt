@@ -14,7 +14,7 @@ pub async fn[T] WorkerPool::run(
   self : WorkerPool[T], 
   handler : async (T) -> Unit raise Error
 ) -> Unit {
-  @async.with_task_group(async fn(tg) {
+  @async.with_task_group((tg) => {
     for i = 0; i < self.concurrency; i = i + 1 {
       tg.spawn_bg(async fn() {
         self.start_single_worker(handler)
