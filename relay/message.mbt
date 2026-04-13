@@ -5,7 +5,7 @@ pub struct Message[T] {
   ///| payload is the generic data contained in the message.
   payload : T
   ///| attempt_count tracks how many times this message has been handled (useful for retries).
-  attempt_count : Int
+  mut attempt_count : Int
 }
 
 ///| new creates a new message.
