@@ -1,4 +1,4 @@
-///| RedisBackend implementa l'interfaccia di storage per Relay utilizzando Redis/Valkey.
+///| RedisBackend implements the storage interface for Relay using Redis/Valkey.
 #cfg(target="native")
 pub struct RedisBackend[T] {
   client : @valkey.Client
@@ -7,7 +7,7 @@ pub struct RedisBackend[T] {
   deserialize : (String) -> T
 }
 
-///| new crea un'istanza di RedisBackend con il client e i serializzatori forniti.
+///| new creates a RedisBackend instance with the provided client and serializers.
 #cfg(target="native")
 pub fn[T] RedisBackend::new(
   client : @valkey.Client, 
@@ -18,14 +18,14 @@ pub fn[T] RedisBackend::new(
   { client: client, key: key, serialize: serialize, deserialize: deserialize }
 }
 
-///| push invia un messaggio alla coda Redis (LPUSH).
+///| push sends a message to the Redis queue (LPUSH).
 #cfg(target="native")
 pub async fn[T] RedisBackend::push(self : RedisBackend[T], v : T) -> Unit raise Error {
   let serialized = (self.serialize)(v)
   self.client.send_command(["LPUSH", self.key, serialized])
 }
 
-///| pop estrae un messaggio dalla coda Redis in modo bloccante (BRPOP).
+///| pop extracts a message from the Redis queue in a blocking manner (BRPOP).
 #cfg(target="native")
 pub async fn[T] RedisBackend::pop(self : RedisBackend[T]) -> Message[T] raise Error {
   self.client.send_command(["BRPOP", self.key, "0"])
@@ -33,19 +33,19 @@ pub async fn[T] RedisBackend::pop(self : RedisBackend[T]) -> Message[T] raise Er
   Message::new("redis_id", mock_payload)
 }
 
-///| ack conferma l'elaborazione del messaggio.
+///| ack confirms message processing.
 #cfg(target="native")
 pub fn[T] RedisBackend::ack(_self : RedisBackend[T], _id : String) -> Unit {
   ()
 }
 
-///| nack segnala il fallimento dell'elaborazione per il reinserimento.
+///| nack signals processing failure for re-insertion.
 #cfg(target="native")
 pub fn[T] RedisBackend::nack(_self : RedisBackend[T], _id : String) -> Unit {
   ()
 }
 
-///| to_relay_queue esporta il backend come una RelayQueue generica.
+///| to_relay_queue exports the backend as a generic RelayQueue.
 #cfg(target="native")
 pub fn[T] RedisBackend::to_relay_queue(self : RedisBackend[T]) -> RelayQueue[T] {
   RelayQueue::new(

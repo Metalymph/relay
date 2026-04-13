@@ -1,4 +1,4 @@
-///| RespValue rappresenta i diversi tipi nel protocollo RESP (Redis Serialization Protocol).
+///| RespValue represents the different types in the RESP (Redis Serialization Protocol).
 pub enum RespValue {
   SimpleString(String)
   Error(String)
@@ -7,22 +7,22 @@ pub enum RespValue {
   Array(Option[Array[RespValue]])
 } derive(Debug, ToJson)
 
-///| RespError rappresenta gli errori durante il parsing RESP.
+///| RespError represents errors occurring during RESP parsing.
 pub suberror RespError {
-  ///| InvalidPrefix viene sollevato se un messaggio non inizia con un carattere RESP riconosciuto.
+  ///| InvalidPrefix occurs when a message does not start with a recognized RESP character.
   InvalidPrefix(Int)
-  ///| UnexpectedEndOfStream viene sollevato se il reader si chiude prematuramente.
+  ///| UnexpectedEndOfStream occurs when the reader closes prematurely.
   UnexpectedEndOfStream
-  ///| MalformedNumber viene sollevato se un campo numerico non è valido.
+  ///| MalformedNumber occurs when a numeric field is invalid.
   MalformedNumber
 } derive(Debug, ToJson)
 
-///| RespParser gestisce la decodifica dei messaggi RESP da uno stream.
+///| RespParser handles decoding RESP messages from a stream.
 pub struct RespParser[R] {
   reader : R
 }
 
-///| new crea un nuovo RespParser da un oggetto che implementa @io.Reader.
+///| new creates a new RespParser from an object implementing @io.Reader.
 pub fn[R] RespParser::new(reader : R) -> RespParser[R] {
   { reader: reader }
 }
@@ -54,7 +54,7 @@ async fn[R : @io.Reader] RespParser::read_line(self : RespParser[R]) -> String r
   @utf8.decode(Bytes::from_array(bytes))
 }
 
-///| parse_value decodifica un singolo RespValue dal reader.
+///| parse_value decodes a single RespValue from the reader.
 pub async fn[R : @io.Reader] RespParser::parse_value(self : RespParser[R]) -> RespValue raise Error {
   let prefix = self.read_byte()
   match prefix {
@@ -83,7 +83,7 @@ pub async fn[R : @io.Reader] RespParser::parse_value(self : RespParser[R]) -> Re
         } catch {
           _ => raise UnexpectedEndOfStream
         }
-        // Consumiamo \r\n finale
+        // Consume tailing \r\n
         let _ = self.read_byte() // \r
         let _ = self.read_byte() // \n
         BulkString(Some(@utf8.decode(buf)))

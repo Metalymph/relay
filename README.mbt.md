@@ -2,7 +2,7 @@
 
 A unified MoonBit workspace providing a **robust, distributed message queue (Relay)** and a **native asynchronous RESP client (Valkey/Redis)**.
 
-This monorepo contains due distinti package. Sono interamente basati sul runtime `moonbitlang/async`, che permette operazioni di rete altamente concorrenti senza bloccare il thread principale.
+This monorepo contains two distinct packages. They are entirely built on the `moonbitlang/async` runtime, enabling highly concurrent network operations without blocking the main event thread.
 
 ## Architecture
 
@@ -12,47 +12,47 @@ moon-cloud-kit/
   └─ relay/         -> "username/relay"     (Message Queue & Backends)
 ```
 
-1. **`username/valkey`**: Un client Redis/Valkey leggero e robusto che implementa nativamente il protocollo RESP in MoonBit. Gestisce connessioni TCP (`@socket.Tcp`) e parsing di stream moltiplicati.
-2. **`username/relay`**: Una coda di messaggi asincrona astratta, progettata per sistemi distribuiti. Fornisce un'interfaccia `RelayQueue[T]` su motori di storage pluggabili.
+1. **`username/valkey`**: A lightweight, robust Redis/Valkey client implementing the RESP protocol natively in MoonBit. Handles TCP connections (`@socket.Tcp`) and parses multiplexed streams.
+2. **`username/relay`**: An abstracted, asynchronous message queue designed for distributed cloud systems. Provides a `RelayQueue[T]` interface over pluggable storage engines.
 
 ### Storage Engines (Relay)
 
-- **`InMemoryBackend`**: Coda asincrona single-node ad alte prestazioni basata su `@aqueue.Queue`. Ideale per attori locali o test.
-- **`RedisBackend`**: Coda distribuita multi-processo che utilizza comandi Redis per il dispatch affidabile.
+- **`InMemoryBackend`**: High-performance, single-node asynchronous queue backed by `@aqueue.Queue`. Ideal for local actors or testing.
+- **`RedisBackend`**: Distributed, multi-process queue using Redis commands for reliable dispatch.
 
 ---
 
 ## 📦 Getting Started
 
-### Utilizzo come Monorepo / Standalone
+### Using as a Monorepo / Standalone
 
-Per compilare e testare l'intero workspace nativamente:
+To compile and test the entire workspace natively:
 
 ```bash
-# Verifica l'integrità del workspace
+# Verify the entire workspace
 moon check --target native
 
-# Esegui la suite di test completa
+# Run the complete test suite
 moon test --target native
 ```
 
-### Esempio d'uso: Worker Pool & Affidabilità (V3)
+### Example Usage: Worker Pool & Reliability (V3)
 
-Relay V3 introduce il supporto per l'elaborazione parallela tramite **WorkerPool** e la gestione automatica degli errori (Ack/Nack/DLQ).
+Relay V3 introduces support for parallel processing via **WorkerPool** and automatic error handling (Ack/Nack/DLQ).
 
 ```moonbit
 import "username/relay"
 
 pub async fn start_processing() -> Unit raise Error {
-  // 1. Inizializza backend e coda
+  // 1. Initialize backend and queue
   let backend = relay.InMemoryBackend::new(100, policy=relay.RetryPolicy::default())
   let queue = backend.to_relay_queue()
 
-  // 2. Crea un Pool di Worker concorrenti (es. 4 worker in parallelo)
+  // 2. Create a concurrent WorkerPool (e.g., 4 workers in parallel)
   let pool = relay.WorkerPool::new(queue, concurrency=4)
 
-  // 3. Avvia l'elaborazione
-  // Il pool gestisce automaticamente Ack (successo) e Nack (errore)
+  // 3. Start processing
+  // The pool automatically handles Ack (success) and Nack (failure)
   pool.run(async fn(payload) {
     println("Processing: \{payload}")
     if payload == "fail" {
@@ -66,8 +66,8 @@ pub async fn start_processing() -> Unit raise Error {
 
 ## 🛠 Features Status
 
-- [x] **Valkey Client**: Connessione TCP, invio comandi RESP, parsing dei primitivi.
-- [x] **Relay - Memory**: Coda FIFO asincrona con supporto In-Flight tracking.
-- [x] **Relay - Redis**: Implementazione `RelayQueue` mappata sui comandi Valkey.
-- [x] **Relay - Worker Pool**: Gestione della concorrenza tramite TaskGroup e Ack/Nack automatici.
-- [x] **Dashboard CLI**: Interfaccia ANSI live per monitorare code e Dead Letter Queue.
+- [x] **Valkey Client**: TCP connection, raw RESP command sending, primitive parsing.
+- [x] **Relay - Memory**: FIFO asynchronous queue with In-Flight tracking.
+- [x] **Relay - Redis**: `RelayQueue` implementation mapped to Valkey commands.
+- [x] **Relay - Worker Pool**: Concurrency management via TaskGroups with automatic Ack/Nack.
+- [x] **Dashboard CLI**: Live ANSI interface to monitor queues and Dead Letter Queues.
