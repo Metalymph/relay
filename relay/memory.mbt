@@ -80,7 +80,7 @@ pub fn[T] InMemoryBackend::to_relay_queue(self : InMemoryBackend[T]) -> RelayQue
   RelayQueue::new(
     push = async fn(v) { self.push(v) },
     pop = async fn() { self.pop() },
-    ack = async fn(id) { self.ack(id) },
+    ack = fn(id) { self.ack(id) },
     nack = async fn(id) { self.nack(id) },
     size = fn() { self.count }
   )

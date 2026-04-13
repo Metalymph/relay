@@ -53,8 +53,8 @@ pub fn[T] RedisBackend::to_relay_queue(self : RedisBackend[T]) -> RelayQueue[T] 
   RelayQueue::new(
     push = async fn(v) { self.push(v) },
     pop = async fn() { self.pop() },
-    ack = async fn(id) { self.ack(id) },
-    nack = async fn(id) { self.nack(id) },
+    ack = fn(id) { self.ack(id) },
+    nack = fn(id) { self.nack(id) },
     size = fn() { 0 }
   )
 }
