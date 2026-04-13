@@ -1,4 +1,4 @@
-///| RespValue represents the different types in the RESP (Redis Serialization Protocol).
+///| RespValue rappresenta i diversi tipi nel protocollo RESP (Redis Serialization Protocol).
 pub enum RespValue {
   SimpleString(String)
   Error(String)
@@ -7,22 +7,22 @@ pub enum RespValue {
   Array(Option[Array[RespValue]])
 } derive(Debug, ToJson)
 
-///| RespError represents errors during RESP parsing.
+///| RespError rappresenta gli errori durante il parsing RESP.
 pub suberror RespError {
-  ///| InvalidPrefix occurs when a message does not start with a recognized RESP character.
+  ///| InvalidPrefix viene sollevato se un messaggio non inizia con un carattere RESP riconosciuto.
   InvalidPrefix(Int)
-  ///| UnexpectedEndOfStream occurs when the reader closes before a message is complete.
+  ///| UnexpectedEndOfStream viene sollevato se il reader si chiude prematuramente.
   UnexpectedEndOfStream
-  ///| MalformedNumber occurs when an integer or length field is not a valid number.
+  ///| MalformedNumber viene sollevato se un campo numerico non è valido.
   MalformedNumber
 } derive(Debug, ToJson)
 
-///| RespParser handles decoding RESP messages from a stream.
+///| RespParser gestisce la decodifica dei messaggi RESP da uno stream.
 pub struct RespParser[R] {
   reader : R
 }
 
-///| new creates a new RespParser from any object implementing @io.Reader.
+///| new crea un nuovo RespParser da un oggetto che implementa @io.Reader.
 pub fn[R] RespParser::new(reader : R) -> RespParser[R] {
   { reader: reader }
 }
@@ -37,22 +37,24 @@ async fn[R : @io.Reader] RespParser::read_byte(self : RespParser[R]) -> Int rais
 }
 
 async fn[R : @io.Reader] RespParser::read_line(self : RespParser[R]) -> String raise Error {
-  let mut line = ""
+  let bytes : Array[Byte] = Array::new()
   for ;; {
     let b = self.read_byte()
     if b == 13 { // \r
       let next = self.read_byte()
       if next == 10 { // \n
-        break line
+        break
       }
-      line = line + "\r" + next.to_char().to_string()
+      bytes.push((13).to_byte())
+      bytes.push(next.to_byte())
     } else {
-      line = line + b.to_char().to_string()
+      bytes.push(b.to_byte())
     }
   }
+  @utf8.decode(Bytes::from_array(bytes))
 }
 
-///| parse_value decodes a single RespValue from the reader.
+///| parse_value decodifica un singolo RespValue dal reader.
 pub async fn[R : @io.Reader] RespParser::parse_value(self : RespParser[R]) -> RespValue raise Error {
   let prefix = self.read_byte()
   match prefix {
@@ -72,7 +74,7 @@ pub async fn[R : @io.Reader] RespParser::parse_value(self : RespParser[R]) -> Re
     }
     36 => { // '$' Bulk String
       let len_line = self.read_line()
-      let len = @string.parse_int(len_line)
+      let len = try { @string.parse_int(len_line) } catch { _ => raise MalformedNumber }
       if len == -1 {
         BulkString(None)
       } else {
@@ -81,7 +83,7 @@ pub async fn[R : @io.Reader] RespParser::parse_value(self : RespParser[R]) -> Re
         } catch {
           _ => raise UnexpectedEndOfStream
         }
-        // Consume \r\n
+        // Consumiamo \r\n finale
         let _ = self.read_byte() // \r
         let _ = self.read_byte() // \n
         BulkString(Some(@utf8.decode(buf)))
@@ -89,7 +91,7 @@ pub async fn[R : @io.Reader] RespParser::parse_value(self : RespParser[R]) -> Re
     }
     42 => { // '*' Array
       let len_line = self.read_line()
-      let len = @string.parse_int(len_line)
+      let len = try { @string.parse_int(len_line) } catch { _ => raise MalformedNumber }
       if len == -1 {
         Array(None)
       } else {

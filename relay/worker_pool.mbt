@@ -1,15 +1,17 @@
-///| WorkerPool gestisce un gruppo di worker concorrenti che elaborano messaggi dalla coda.
+///| WorkerPool manages a group of concurrent workers that process messages from the queue.
 pub struct WorkerPool[T] {
   queue : RelayQueue[T]
   concurrency : Int
 }
 
-///| new crea un nuovo pool di worker con la concorrenza specificata.
+///| new creates a new worker pool with the specified concurrency.
 pub fn[T] WorkerPool::new(queue : RelayQueue[T], concurrency~ : Int) -> WorkerPool[T] {
   { queue: queue, concurrency: concurrency }
 }
 
-///| run avvia il pool. Ogni worker viene lanciato come un task in background in un TaskGroup.
+///| run starts the pool. Each worker is launched as a background task within a TaskGroup.
+/// This function suspends until all workers terminate (which usually happens when the
+/// TaskGroup is cancelled or the queue is closed).
 pub async fn[T] WorkerPool::run(
   self : WorkerPool[T], 
   handler : async (T) -> Unit raise Error
@@ -23,18 +25,20 @@ pub async fn[T] WorkerPool::run(
   })
 }
 
-///| start_single_worker definisce il ciclo di vita di un singolo worker nel pool.
+///| start_single_worker defines the lifecycle of a single worker in the pool.
 async fn[T] WorkerPool::start_single_worker(
   self : WorkerPool[T],
   handler : async (T) -> Unit raise Error
 ) -> Unit {
   for ;; {
+    // 1. Pop message (suspends if queue is empty)
     let msg = try {
       self.queue.pop()
     } catch {
-      _ => break
+      _ => break // Exit if queue fails or is closed
     }
 
+    // 2. Process via the user-provided handler
     let result = try {
       handler(msg.payload)
       Ok(())
@@ -42,6 +46,7 @@ async fn[T] WorkerPool::start_single_worker(
       e => Err(e)
     }
 
+    // 3. Handle outcome: Ack on success, Nack on error
     match result {
       Ok(_) => {
         let _ = try { self.queue.ack(msg.id) } catch { _ => () }
