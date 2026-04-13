@@ -2,7 +2,7 @@
 
 A unified MoonBit workspace providing a **robust, distributed message queue (Relay)** and a **native asynchronous RESP client (Valkey/Redis)**.
 
-This monorepo contains two distinct and independently publishable packages. They are entirely built on the first-class `moonbitlang/async` runtime, enabling highly concurrent network operations without blocking the main event thread.
+This monorepo contains two distinct packages. They are entirely built on the `moonbitlang/async` runtime, enabling highly concurrent network operations without blocking the main event thread.
 
 ## Architecture
 
@@ -12,83 +12,62 @@ moon-cloud-kit/
   └─ relay/         -> "username/relay"     (Message Queue & Backends)
 ```
 
-1. **`username/valkey`**: A lightweight, robust Redis/Valkey client implementing the RESP protocol natively in MoonBit. It handles TCP connections (`@socket.Tcp`) and parses multiplexed streams.
-2. **`username/relay`**: An abstracted, asynchronous message queue designed for distributed cloud systems. Provides a `RelayQueue[T]` wrapper over pluggable storage engines.
+1. **`username/valkey`**: A lightweight, robust Redis/Valkey client implementing the RESP protocol natively in MoonBit. Handles TCP connections (`@socket.Tcp`) and parses multiplexed streams.
+2. **`username/relay`**: An abstracted, asynchronous message queue designed for distributed cloud systems. Provides a `RelayQueue[T]` interface over pluggable storage engines.
 
 ### Storage Engines (Relay)
 
-- **`InMemoryBackend`**: High-performance, single-node asynchronous queue backed by `@aqueue.Queue`. Perfect for local actors, background jobs within the same service, or testing.
-- **`RedisBackend`** (Powered by `valkey`): Cloud-ready, multi-process distributed queue using Redis `LPUSH` and `BRPOP` commands for reliable dispatch.
+- **`InMemoryBackend`**: High-performance, single-node asynchronous queue backed by `@aqueue.Queue`. Ideal for local actors or testing.
+- **`RedisBackend`**: Distributed, multi-process queue using Redis commands for reliable dispatch.
 
 ---
 
 ## 📦 Getting Started
 
-### Using as a Monorepo/Standalone
+### Using as a Monorepo / Standalone
 
-To run and test the complete workspace natively:
+To compile and test the entire workspace natively:
 
 ```bash
 # Verify the entire workspace
 moon check --target native
 
-# Run the test suites
+# Run the complete test suite
 moon test --target native
 ```
 
-### Importing into your MoonBit Server/CLI
+### Example Usage: Worker Pool & Reliability (V3)
 
-If you are building a MoonBit application and want to use **Relay** as your message queue:
-
-1. Add the dependency to your project's `moon.mod.json`:
-
-```json
-{
-  "deps": {
-    "username/relay": "0.1.0"
-  }
-}
-```
-
-1. Import the packages in your `moon.pkg`:
-
-```json
-{
-  "import": [
-    "username/relay"
-  ]
-}
-```
-
-1. Initialize and use the queue in your code:
+Relay V3 introduces support for parallel processing via **WorkerPool** and automatic error handling (Ack/Nack/DLQ).
 
 ```moonbit
 import "username/relay"
 
-pub async fn start_background_jobs() -> Unit!Error {
-  // 1. Initialize an in-memory queue with a capacity of 100
-  let memory_backend = relay.InMemoryBackend::new(100)
-  let queue = memory_backend.to_relay_queue()
+pub async fn start_processing() -> Unit raise Error {
+  // 1. Initialize backend and queue
+  let backend = relay.InMemoryBackend::new(100, policy=relay.RetryPolicy::default())
+  let queue = backend.to_relay_queue()
 
-  // 2. Start a background worker 
-  // The worker will suspend asynchronously when the queue is empty
-  let _ = relay.start_worker(queue, fn(msg) {
-    println("Processing job: " + msg.id)
+  // 2. Create a concurrent WorkerPool (e.g., 4 workers in parallel)
+  let pool = relay.WorkerPool::new(queue, concurrency=4)
+
+  // 3. Start processing
+  // The pool automatically handles Ack (success) and Nack (failure)
+  pool.run(async fn(payload) {
+    println("Processing: \{payload}")
+    if payload == "fail" {
+       raise Error::new("Simulation failed")
+    }
   })
-
-  // 3. Push jobs into the queue asynchronously
-  queue.push!("job_data_1")
-  queue.push!("job_data_2")
 }
 ```
-
-*(For Redis, you would initialize `relay.RedisBackend::new(host, port)` instead).*
 
 ---
 
 ## 🛠 Features Status
 
-- [x] **Valkey Client**: TCP connection scaffold, raw RESP command sending, RESP primitive parsing (`String`, `Integer`, `Array`, `BulkString`, `Error`).
-- [x] **Relay - Memory**: Complete, passing tests. FIFO asynchronous actor suspension bounded queues.
-- [x] **Relay - Redis**: (Integration in progress). Decoupled `RelayQueue` implementation mapping directly to Valkey stream calls.
-- [x] **Relay - Worker**: Acknowledgement and retry tracking logic (V3).
+- [x] **Valkey Client**: TCP connection, raw RESP command sending, primitive parsing.
+- [x] **Relay - Memory**: FIFO asynchronous queue with In-Flight tracking.
+- [x] **Relay - Redis**: `RelayQueue` implementation mapped to Valkey commands.
+- [x] **Relay - Worker Pool**: Concurrency management via TaskGroups with automatic Ack/Nack.
+- [x] **Dashboard CLI**: Live ANSI interface to monitor queues and Dead Letter Queues.

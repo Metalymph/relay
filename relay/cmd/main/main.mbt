@@ -4,31 +4,27 @@ async fn main {
   let dashboard = @relay.Dashboard::new(queue, backend)
   
   try {
-    // Puschiamo 10 messaggi
+    // 1. Push 10 messages
     for i = 1; i <= 10; i = i + 1 {
       queue.push("Msg \{i}")
     }
     
-    // 3 In-Flight
+    // 2. Simulate 3 In-Flight messages
     let _ = queue.pop()
     let _ = queue.pop()
     let _ = queue.pop()
     
-    // 2 in DLQ (max_attempts = 1)
+    // 3. Force 2 into DLQ (max_attempts = 1)
     let m1 = queue.pop()
     queue.nack(m1.id)
     let m2 = queue.pop()
     queue.nack(m2.id)
     
-    // Risultato atteso: 
-    // In coda: 10 - 3 - 2 = 5
-    // In-Flight: 3
-    // DLQ: 2
-    
+    // 4. Render dashboard
     dashboard.render()
     
-    println("\nDemo Mixed State completata!")
+    println("\nMixed State Demo completed successfully!")
   } catch {
-    e => println("Errore: \{e}")
+    e => println("Error: \{e}")
   }
 }
