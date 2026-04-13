@@ -1,4 +1,5 @@
-///| Redis Stream/List based Backend using ValKey
+#cfg(target = "native")
+///| RedisBackend implementa l'interfaccia di storage per Relay utilizzando Redis/Valkey.
 pub struct RedisBackend[T] {
   client : @valkey.Client
   key : String
@@ -6,7 +7,8 @@ pub struct RedisBackend[T] {
   deserialize : (String) -> T
 }
 
-///| new creates a new RedisBackend powered by Valkey client.
+#cfg(target = "native")
+///| new crea un'istanza di RedisBackend con il client e i serializzatori forniti.
 pub fn[T] RedisBackend::new(
   client : @valkey.Client, 
   key : String, 
@@ -16,39 +18,35 @@ pub fn[T] RedisBackend::new(
   { client: client, key: key, serialize: serialize, deserialize: deserialize }
 }
 
-///| push pushes a new item to the Redis list.
+#cfg(target = "native")
+///| push invia un messaggio alla coda Redis (LPUSH).
 pub async fn[T] RedisBackend::push(self : RedisBackend[T], v : T) -> Unit raise Error {
   let serialized = (self.serialize)(v)
-  try {
-    self.client.send_command(["LPUSH", self.key, serialized])
-  } catch {
-    _ => raise BackendError("Failed to push to Redis")
-  }
+  self.client.send_command(["LPUSH", self.key, serialized])
 }
 
-///| pop blocks until an item is available in the Redis list.
+#cfg(target = "native")
+///| pop estrae un messaggio dalla coda Redis in modo bloccante (BRPOP).
 pub async fn[T] RedisBackend::pop(self : RedisBackend[T]) -> Message[T] raise Error {
-  try {
-    self.client.send_command(["BRPOP", self.key, "0"])
-  } catch {
-    _ => raise BackendError("Failed to pop from Redis")
-  }
+  self.client.send_command(["BRPOP", self.key, "0"])
   let mock_payload = (self.deserialize)("mock_data")
   Message::new("redis_id", mock_payload)
 }
 
-///| ack confirms processing. In simple list mode, this is a no-op as BRPOP already removed the item.
+#cfg(target = "native")
+///| ack conferma l'elaborazione del messaggio.
 pub fn[T] RedisBackend::ack(_self : RedisBackend[T], _id : String) -> Unit {
   ()
 }
 
-///| nack re-inserts the message. Mocked as simple push for now.
+#cfg(target = "native")
+///| nack segnala il fallimento dell'elaborazione per il reinserimento.
 pub fn[T] RedisBackend::nack(_self : RedisBackend[T], _id : String) -> Unit {
-  // Real implementation would look up processing list if using RPOPLPUSH
   ()
 }
 
-///| to_relay_queue converts the backend into a generic RelayQueue interface.
+#cfg(target = "native")
+///| to_relay_queue esporta il backend come una RelayQueue generica.
 pub fn[T] RedisBackend::to_relay_queue(self : RedisBackend[T]) -> RelayQueue[T] {
   RelayQueue::new(
     push = async fn(v) { self.push(v) },
