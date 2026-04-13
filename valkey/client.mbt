@@ -7,6 +7,7 @@ pub struct Client {
 }
 
 ///| ValkeyError represents the error types handled by the Valkey driver.
+#cfg(target="native")
 pub suberror ValkeyError {
   ///| ConnectionError indicates a TCP communication failure.
   ConnectionError(String)
@@ -37,4 +38,19 @@ pub async fn Client::send_command(self : Client, args : Array[String]) -> Unit r
   } catch {
     e => raise ConnectionError("Write failed: \{e}")
   }
+}
+
+///|
+#cfg(target="native")
+fn _dummy_use_native() -> Unit {
+  let _ : @socket.IpProtocolPreference? = None
+  let _ : @async.RetryMethod? = None
+  ()
+}
+
+///|
+#cfg(not(target="native"))
+fn _dummy_use_non_native() -> Unit {
+  let _ : @async.RetryMethod? = None
+  ()
 }

@@ -13,7 +13,7 @@ pub suberror RespError {
   InvalidPrefix(Int)
   ///| UnexpectedEndOfStream occurs when the reader closes prematurely.
   UnexpectedEndOfStream
-  ///| MalformedNumber occurs when a numeric field is invalid.
+  ///| MalformedNumber occurs when a numeric field is not a valid number.
   MalformedNumber
 } derive(Debug, ToJson)
 
