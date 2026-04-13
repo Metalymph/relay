@@ -11,9 +11,9 @@ pub enum RespValue {
 pub suberror RespError {
   ///| InvalidPrefix occurs when a message does not start with a recognized RESP character.
   InvalidPrefix(Int)
-  ///| UnexpectedEndOfStream occurs when the reader closes before a message is complete.
+  ///| UnexpectedEndOfStream occurs when the reader closes prematurely.
   UnexpectedEndOfStream
-  ///| MalformedNumber occurs when an integer or length field is not a valid number.
+  ///| MalformedNumber occurs when a numeric field is not a valid number.
   MalformedNumber
 } derive(Debug, ToJson)
 
@@ -37,19 +37,21 @@ async fn[R : @io.Reader] RespParser::read_byte(self : RespParser[R]) -> Int rais
 }
 
 async fn[R : @io.Reader] RespParser::read_line(self : RespParser[R]) -> String raise Error {
-  let mut line = ""
+  let bytes : Array[Byte] = Array::new()
   for ;; {
     let b = self.read_byte()
     if b == 13 { // \r
       let next = self.read_byte()
       if next == 10 { // \n
-        break line
+        break
       }
-      line = line + "\r" + next.to_char().to_string()
+      bytes.push((13).to_byte())
+      bytes.push(next.to_byte())
     } else {
-      line = line + b.to_char().to_string()
+      bytes.push(b.to_byte())
     }
   }
+  @utf8.decode(Bytes::from_array(bytes))
 }
 
 ///| parse_value decodes a single RespValue from the reader.
@@ -72,7 +74,7 @@ pub async fn[R : @io.Reader] RespParser::parse_value(self : RespParser[R]) -> Re
     }
     36 => { // '$' Bulk String
       let len_line = self.read_line()
-      let len = @string.parse_int(len_line)
+      let len = try { @string.parse_int(len_line) } catch { _ => raise MalformedNumber }
       if len == -1 {
         BulkString(None)
       } else {
@@ -89,7 +91,7 @@ pub async fn[R : @io.Reader] RespParser::parse_value(self : RespParser[R]) -> Re
     }
     42 => { // '*' Array
       let len_line = self.read_line()
-      let len = @string.parse_int(len_line)
+      let len = try { @string.parse_int(len_line) } catch { _ => raise MalformedNumber }
       if len == -1 {
         Array(None)
       } else {

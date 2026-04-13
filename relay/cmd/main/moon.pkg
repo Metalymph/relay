@@ -1,6 +1,4 @@
 import {
-  "username/relay",
-  "moonbitlang/async"
 }
 
 options(
