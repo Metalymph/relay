@@ -10,12 +10,12 @@ This monorepo contains two distinct packages. They are entirely built on the `mo
 
 ```text
 moon-cloud-kit/
-  ├─ valkey/        -> "metalymph/valkey"    (Native RESP Client)
-  └─ relay/         -> "metalymph/relay"     (Message Queue & Backends)
+  ├─ valkey/        -> "Metalymph/valkey"    (Native RESP Client)
+  └─ relay/         -> "Metalymph/relay"     (Message Queue & Backends)
 ```
 
-1. **`metalymph/valkey`**: A lightweight, robust Redis/Valkey client implementing the RESP protocol natively in MoonBit. It handles TCP connections (`@socket.Tcp`) and parses multiplexed streams.
-2. **`metalymph/relay`**: An abstracted, asynchronous message queue designed for distributed cloud systems. Provides a `RelayQueue[T]` wrapper over pluggable storage engines.
+1. **`Metalymph/valkey`**: A lightweight, robust Redis/Valkey client implementing the RESP protocol natively in MoonBit. It handles TCP connections (`@socket.Tcp`) and parses multiplexed streams.
+2. **`Metalymph/relay`**: An abstracted, asynchronous message queue designed for distributed cloud systems. Provides a `RelayQueue[T]` wrapper over pluggable storage engines.
 
 ### Storage Engines (Relay)
 
@@ -47,7 +47,7 @@ If you are building a MoonBit application and want to use **Relay** as your mess
 ```json
 {
   "deps": {
-    "metalymph/relay": "0.1.0"
+    "Metalymph/relay": "0.1.0"
   }
 }
 ```
@@ -57,7 +57,7 @@ If you are building a MoonBit application and want to use **Relay** as your mess
 ```json
 {
   "import": [
-    "metalymph/relay"
+    "Metalymph/relay"
   ]
 }
 ```
@@ -65,7 +65,7 @@ If you are building a MoonBit application and want to use **Relay** as your mess
 1. Initialize and use the queue in your code:
 
 ```moonbit
-import "metalymph/relay"
+import "Metalymph/relay"
 
 pub async fn start_processing() -> Unit raise Error {
   // 1. Initialize backend and queue
