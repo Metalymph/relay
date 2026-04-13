@@ -8,12 +8,12 @@ This monorepo contains two distinct packages. They are entirely built on the `mo
 
 ```text
 moon-cloud-kit/
-  ├─ valkey/        -> "username/valkey"    (Native RESP Client)
-  └─ relay/         -> "username/relay"     (Message Queue & Backends)
+  ├─ valkey/        -> "metalymph/valkey"    (Native RESP Client)
+  └─ relay/         -> "metalymph/relay"     (Message Queue & Backends)
 ```
 
-1. **`username/valkey`**: A lightweight, robust Redis/Valkey client implementing the RESP protocol natively in MoonBit. Handles TCP connections (`@socket.Tcp`) and parses multiplexed streams.
-2. **`username/relay`**: An abstracted, asynchronous message queue designed for distributed cloud systems. Provides a `RelayQueue[T]` interface over pluggable storage engines.
+1. **`metalymph/valkey`**: A lightweight, robust Redis/Valkey client implementing the RESP protocol natively in MoonBit. It handles TCP connections (`@socket.Tcp`) and parses multiplexed streams.
+2. **`metalymph/relay`**: An abstracted, asynchronous message queue designed for distributed cloud systems. Provides a `RelayQueue[T]` wrapper over pluggable storage engines.
 
 ### Storage Engines (Relay)
 
@@ -38,10 +38,32 @@ moon test --target native
 
 ### Example Usage: Worker Pool & Reliability (V3)
 
-Relay V3 introduces support for parallel processing via **WorkerPool** and automatic error handling (Ack/Nack/DLQ).
+If you are building a MoonBit application and want to use **Relay** as your message queue:
+
+1. Add the dependency to your project's `moon.mod.json`:
+
+```json
+{
+  "deps": {
+    "metalymph/relay": "0.1.0"
+  }
+}
+```
+
+1. Import the packages in your `moon.pkg`:
+
+```json
+{
+  "import": [
+    "metalymph/relay"
+  ]
+}
+```
+
+1. Initialize and use the queue in your code:
 
 ```moonbit
-import "username/relay"
+import "metalymph/relay"
 
 pub async fn start_processing() -> Unit raise Error {
   // 1. Initialize backend and queue
