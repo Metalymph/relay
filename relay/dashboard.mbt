@@ -13,7 +13,7 @@ pub fn[T] Dashboard::new(queue : RelayQueue[T], backend : InMemoryBackend[T]) ->
 pub fn[T] Dashboard::render(self : Dashboard[T]) -> Unit {
   let main_size = self.queue.size()
   let dlq_size = self.backend.dlq_size()
-  let in_flight = self.backend.in_flight.size()
+  let in_flight = self.backend.in_flight.length()
   
   println("\u001b[2J\u001b[H") // Pulisce lo schermo e resetta il cursore
   println("\u001b[1;36m=== RELAY MESSAGE QUEUE DASHBOARD ===\u001b[0m")
