@@ -1,7 +1,7 @@
 // Valkey native client
 
-#cfg(target = "native")
 ///| Client è un client nativo per Valkey/Redis che supporta operazioni asincrone.
+#cfg(target="native")
 pub struct Client {
   conn : @socket.Tcp
 }
@@ -12,8 +12,8 @@ pub suberror ValkeyError {
   ConnectionError(String)
 } derive(Debug, ToJson)
 
-#cfg(target = "native")
 ///| connect apre una connessione asincrona verso l'host e la porta specificati.
+#cfg(target="native")
 pub async fn Client::connect(host : String, port : Int) -> Client raise Error {
   try {
     let addr = @socket.Addr::resolve(host, port~)
@@ -24,8 +24,8 @@ pub async fn Client::connect(host : String, port : Int) -> Client raise Error {
   }
 }
 
-#cfg(target = "native")
 ///| send_command codifica e invia un comando RESP (Redis Serialization Protocol) al server.
+#cfg(target="native")
 pub async fn Client::send_command(self : Client, args : Array[String]) -> Unit raise Error {
   let mut cmd = "*" + args.length().to_string() + "\r\n"
   for arg in args {
