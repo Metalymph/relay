@@ -29,3 +29,8 @@ async fn main {
     e => println("Error: \{e}")
   }
 }
+
+#cfg(not(target="native"))
+fn main {
+  println("This demo is only supported on native target.")
+}
