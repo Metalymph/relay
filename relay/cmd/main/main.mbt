@@ -13,8 +13,3 @@ fn main {
 fn main {
   println("Relay Demo: Native target only.")
 }
-
-#cfg(not(target="native"))
-fn main {
-  println("This demo is only supported on native target.")
-}
