@@ -6,8 +6,8 @@
     "username/valkey": "0.1.0"
   },
   "readme": "README.mbt.md",
-  "repository": "",
+  "repository": "https://github.com/Metalymph/relay",
   "license": "Apache-2.0",
   "keywords": [],
-  "description": ""
+  "description": "Distributed message queue with V3 reliability and Valkey support"
 }

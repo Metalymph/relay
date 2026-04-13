@@ -1,3 +1,4 @@
+#cfg(target="native")
 async fn main {
   let backend = @relay.InMemoryBackend::new(100, policy=@relay.RetryPolicy::new(1))
   let queue = backend.to_relay_queue()
