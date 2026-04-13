@@ -1,4 +1,6 @@
 import {
+  "moonbitlang/async",
   "moonbitlang/async/aqueue" @aqueue,
-  "username/valkey" @valkey
+  "username/valkey" @valkey,
+  "moonbitlang/core/hashmap" @hashmap
 }
