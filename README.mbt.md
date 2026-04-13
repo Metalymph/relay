@@ -1,5 +1,7 @@
 # Cloud Kit: Relay & Valkey for MoonBit
 
+![Relay Rabbit Banner](assets/banner.png)
+
 A unified MoonBit workspace providing a **robust, distributed message queue (Relay)** and a **native asynchronous RESP client (Valkey/Redis)**.
 
 This monorepo contains two distinct packages. They are entirely built on the `moonbitlang/async` runtime, enabling highly concurrent network operations without blocking the main event thread.
