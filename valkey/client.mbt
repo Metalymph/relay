@@ -2,8 +2,6 @@
 pub suberror ValkeyError {
   ///| ConnectionError occurs when a TCP connection fails or is dropped.
   ConnectionError(String)
-  ///| ProtocolError occurs when the Valkey server returns an unexpected RESP response.
-  ProtocolError(String)
 } derive(Debug, ToJson)
 
 ///| Client is a native Valkey/Redis client.

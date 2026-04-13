@@ -1,11 +1,11 @@
 ///| Message[T] represents a wrapper for data sent through the queue.
 pub struct Message[T] {
   ///| id is a unique identifier assigned by the backend.
-  pub id : String
+  id : String
   ///| payload is the generic data contained in the message.
-  pub payload : T
+  payload : T
   ///| attempt_count tracks how many times this message has been handled (useful for retries).
-  pub attempt_count : Int
+  attempt_count : Int
 }
 
 ///| new creates a new message.
