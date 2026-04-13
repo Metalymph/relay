@@ -1,6 +1,6 @@
 ///| RetryPolicy defines how the queue handles failed message processing.
 pub struct RetryPolicy {
-  pub max_attempts : Int
+  max_attempts : Int
 }
 
 ///| new_policy creates a custom retry policy.

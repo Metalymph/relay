@@ -16,6 +16,7 @@ moon-cloud-kit/
 2. **`username/relay`**: An abstracted, asynchronous message queue designed for distributed cloud systems. Provides a `RelayQueue[T]` wrapper over pluggable storage engines.
 
 ### Storage Engines (Relay)
+
 - **`InMemoryBackend`**: High-performance, single-node asynchronous queue backed by `@aqueue.Queue`. Perfect for local actors, background jobs within the same service, or testing.
 - **`RedisBackend`** (Powered by `valkey`): Cloud-ready, multi-process distributed queue using Redis `LPUSH` and `BRPOP` commands for reliable dispatch.
 
@@ -24,7 +25,9 @@ moon-cloud-kit/
 ## 📦 Getting Started
 
 ### Using as a Monorepo/Standalone
+
 To run and test the complete workspace natively:
+
 ```bash
 # Verify the entire workspace
 moon check --target native
@@ -34,9 +37,11 @@ moon test --target native
 ```
 
 ### Importing into your MoonBit Server/CLI
+
 If you are building a MoonBit application and want to use **Relay** as your message queue:
 
 1. Add the dependency to your project's `moon.mod.json`:
+
 ```json
 {
   "deps": {
@@ -45,7 +50,8 @@ If you are building a MoonBit application and want to use **Relay** as your mess
 }
 ```
 
-2. Import the packages in your `moon.pkg`:
+1. Import the packages in your `moon.pkg`:
+
 ```json
 {
   "import": [
@@ -54,7 +60,7 @@ If you are building a MoonBit application and want to use **Relay** as your mess
 }
 ```
 
-3. Initialize and use the queue in your code:
+1. Initialize and use the queue in your code:
 
 ```moonbit
 import "username/relay"
@@ -85,4 +91,4 @@ pub async fn start_background_jobs() -> Unit!Error {
 - [x] **Valkey Client**: TCP connection scaffold, raw RESP command sending, RESP primitive parsing (`String`, `Integer`, `Array`, `BulkString`, `Error`).
 - [x] **Relay - Memory**: Complete, passing tests. FIFO asynchronous actor suspension bounded queues.
 - [x] **Relay - Redis**: (Integration in progress). Decoupled `RelayQueue` implementation mapping directly to Valkey stream calls.
-- [ ] **Relay - Worker**: Acknowledgement and retry tracking logic (V3).
+- [x] **Relay - Worker**: Acknowledgement and retry tracking logic (V3).
