@@ -1,0 +1,82 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "Metalymph/relay"
+
+import {
+  "moonbitlang/async/aqueue",
+  "moonbitlang/core/debug",
+  "moonbitlang/core/hashmap",
+}
+
+// Values
+pub async fn[T] start_worker(RelayQueue[T], (Message[T]) -> Unit) -> Unit
+
+// Errors
+pub suberror QueueError {
+  OperationFailed(String)
+} derive(ToJson, @debug.Debug)
+
+// Types and methods
+pub struct Dashboard[T] {
+  queue : RelayQueue[T]
+  backend : InMemoryBackend[T]
+}
+pub fn[T] Dashboard::new(RelayQueue[T], InMemoryBackend[T]) -> Self[T]
+pub fn[T] Dashboard::render(Self[T]) -> Unit
+pub fn[T] Dashboard::start_auto_render(Self[T]) -> Unit
+
+pub struct InMemoryBackend[T] {
+  queue : @aqueue.Queue[Message[T]]
+  dlq : @aqueue.Queue[Message[T]]
+  in_flight : @hashmap.HashMap[String, Message[T]]
+  policy : RetryPolicy
+  mut next_id : Int
+  mut count : Int
+  mut dlq_count : Int
+}
+pub fn[T] InMemoryBackend::ack(Self[T], String) -> Unit
+pub fn[T] InMemoryBackend::dlq_size(Self[T]) -> Int
+pub async fn[T] InMemoryBackend::nack(Self[T], String) -> Unit
+pub fn[T] InMemoryBackend::new(Int, policy? : RetryPolicy) -> Self[T]
+pub async fn[T] InMemoryBackend::pop(Self[T]) -> Message[T]
+pub async fn[T] InMemoryBackend::push(Self[T], T) -> Unit
+pub fn[T] InMemoryBackend::size(Self[T]) -> Int
+pub fn[T] InMemoryBackend::to_relay_queue(Self[T]) -> RelayQueue[T]
+
+pub struct Message[T] {
+  id : String
+  payload : T
+  mut attempt_count : Int
+}
+pub fn[T] Message::new(String, T, attempt_count? : Int) -> Self[T]
+
+pub struct RelayQueue[T] {
+  push_fn : async (T) -> Unit
+  pop_fn : async () -> Message[T]
+  ack_fn : async (String) -> Unit
+  nack_fn : async (String) -> Unit
+  size_fn : () -> Int
+}
+pub async fn[T] RelayQueue::ack(Self[T], String) -> Unit
+pub async fn[T] RelayQueue::nack(Self[T], String) -> Unit
+pub fn[T] RelayQueue::new(push~ : async (T) -> Unit, pop~ : async () -> Message[T], ack~ : async (String) -> Unit, nack~ : async (String) -> Unit, size~ : () -> Int) -> Self[T]
+pub async fn[T] RelayQueue::pop(Self[T]) -> Message[T]
+pub async fn[T] RelayQueue::push(Self[T], T) -> Unit
+pub fn[T] RelayQueue::size(Self[T]) -> Int
+
+pub struct RetryPolicy {
+  max_attempts : Int
+}
+pub fn RetryPolicy::default() -> Self
+pub fn RetryPolicy::new(Int) -> Self
+
+pub struct WorkerPool[T] {
+  queue : RelayQueue[T]
+  concurrency : Int
+}
+pub fn[T] WorkerPool::new(RelayQueue[T], concurrency~ : Int) -> Self[T]
+pub async fn[T] WorkerPool::run(Self[T], async (T) -> Unit) -> Unit
+
+// Type aliases
+
+// Traits
+
