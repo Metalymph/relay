@@ -1,0 +1,36 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "Metalymph/valkey"
+
+import {
+  "moonbitlang/async/io",
+  "moonbitlang/core/debug",
+}
+
+// Values
+
+// Errors
+pub suberror RespError {
+  InvalidPrefix(Int)
+  UnexpectedEndOfStream
+  MalformedNumber
+} derive(ToJson, @debug.Debug)
+
+// Types and methods
+pub struct RespParser[R] {
+  reader : R
+}
+pub fn[R] RespParser::new(R) -> Self[R]
+pub async fn[R : @io.Reader] RespParser::parse_value(Self[R]) -> RespValue
+
+pub enum RespValue {
+  SimpleString(String)
+  Error(String)
+  Integer(Int64)
+  BulkString(String?)
+  Array(Array[RespValue]?)
+} derive(ToJson, @debug.Debug)
+
+// Type aliases
+
+// Traits
+

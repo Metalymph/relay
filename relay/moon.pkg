@@ -2,5 +2,5 @@ import {
   "moonbitlang/async" @async,
   "moonbitlang/async/aqueue" @aqueue,
   "Metalymph/valkey" @valkey,
-  "moonbitlang/core/hashmap" @hashmap
+  "moonbitlang/core/hashmap" @hashmap,
 }
