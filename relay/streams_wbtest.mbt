@@ -238,3 +238,77 @@ async test "redis_stream_backend_pending_count" {
 
   assert_eq(pending_after, 0L)
 }
+
+///|
+#cfg(target="native")
+async test "redis_stream_backend_recovery_queue_recovers_pending_before_new_messages" {
+  let client1 = @valkey.Client::connect("127.0.0.1", 6381) catch {
+    _ => return
+  }
+
+  let stream = "relay:test:stream:recovery:queue"
+  let group = "relay:test:stream:recovery:queue:group"
+
+  let _ = client1.del(stream) catch { _ => 0L }
+
+  let backend1 = RedisStreamBackend::new(
+    client1,
+    stream,
+    group,
+    "consumer-1",
+    serialize=fn(v : String) { v },
+    deserialize=fn(v : String) { v },
+  )
+
+  backend1.init() catch {
+    e => fail("init failed: \{e}")
+  }
+
+  backend1.push("recover-through-queue") catch {
+    e => fail("push failed: \{e}")
+  }
+
+  let original = backend1.pop() catch {
+    e => fail("initial pop failed: \{e}")
+  }
+
+  assert_eq(original.payload, "recover-through-queue")
+
+  let pending_before = backend1.pending_count() catch {
+    e => fail("pending_count failed: \{e}")
+  }
+
+  assert_eq(pending_before, 1L)
+
+  let client2 = @valkey.Client::connect("127.0.0.1", 6381) catch {
+    e => fail("second connect failed: \{e}")
+  }
+
+  let backend2 = RedisStreamBackend::new(
+    client2,
+    stream,
+    group,
+    "consumer-2",
+    serialize=fn(v : String) { v },
+    deserialize=fn(v : String) { v },
+  )
+
+  let queue = backend2.to_relay_queue_with_recovery(0, 1000)
+
+  let recovered = queue.pop() catch {
+    e => fail("recovery queue pop failed: \{e}")
+  }
+
+  assert_eq(recovered.id, original.id)
+  assert_eq(recovered.payload, "recover-through-queue")
+
+  queue.ack(recovered.id) catch {
+    e => fail("queue ack failed: \{e}")
+  }
+
+  let pending_after = backend2.pending_count() catch {
+    e => fail("pending_count failed: \{e}")
+  }
+
+  assert_eq(pending_after, 0L)
+}

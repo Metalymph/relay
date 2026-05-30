@@ -93,6 +93,21 @@ pub async fn[T] RedisStreamBackend::recover_pending(
 }
 
 ///|
+/// recover_or_pop first tries to recover a pending message, then falls back to
+/// blocking reads for new stream entries.
+#cfg(target="native")
+pub async fn[T] RedisStreamBackend::recover_or_pop(
+  self : RedisStreamBackend[T],
+  min_idle_ms : Int,
+  block_ms : Int,
+) -> Message[T] raise Error {
+  match self.recover_pending(min_idle_ms) {
+    Some(msg) => msg
+    None => self.pop_block(block_ms)
+  }
+}
+
+///|
 /// pending_count returns the number of unacknowledged messages.
 #cfg(target="native")
 pub async fn[T] RedisStreamBackend::pending_count(
@@ -135,6 +150,24 @@ pub fn[T] RedisStreamBackend::to_relay_queue(
   RelayQueue::new(
     push=async fn(v) { self.push(v) },
     pop=async fn() { self.pop() },
+    ack=async fn(id) { self.ack(id) },
+    nack=async fn(id) { self.nack(id) },
+    size=fn() { 0 },
+  )
+}
+
+///|
+/// to_relay_queue_with_recovery exports the stream backend as a RelayQueue
+/// whose pop path first recovers pending entries before blocking for new ones.
+#cfg(target="native")
+pub fn[T] RedisStreamBackend::to_relay_queue_with_recovery(
+  self : RedisStreamBackend[T],
+  min_idle_ms : Int,
+  block_ms : Int,
+) -> RelayQueue[T] {
+  RelayQueue::new(
+    push=async fn(v) { self.push(v) },
+    pop=async fn() { self.recover_or_pop(min_idle_ms, block_ms) },
     ack=async fn(id) { self.ack(id) },
     nack=async fn(id) { self.nack(id) },
     size=fn() { 0 },
