@@ -9,10 +9,11 @@ pub struct Client {
 
 ///|
 /// ValkeyError represents the error types handled by the Valkey driver.
-#cfg(target="native")
 pub suberror ValkeyError {
   /// ConnectionError indicates a TCP communication failure.
   ConnectionError(String)
+  /// ProtocolError indicates a RESP protocol parsing failure.
+  ProtocolError(String)
 } derive(Debug, ToJson)
 
 ///|
@@ -43,6 +44,27 @@ pub async fn Client::send_command(
   @io.Writer::write(self.conn, data) catch {
     e => raise ConnectionError("Write failed: \{e}")
   }
+}
+
+///|
+/// read_response reads a RESP response from the server.
+#cfg(target="native")
+pub async fn Client::read_response(self : Client) -> RespValue raise Error {
+  let parser = RespParser::new(self.conn)
+  parser.parse_value() catch {
+    err => raise ProtocolError("RESP parse failed: \{err}")
+  }
+}
+
+///|
+/// request sends a command and returns the response.
+#cfg(target="native")
+pub async fn Client::request(
+  self : Client,
+  args : Array[String],
+) -> RespValue raise Error {
+  self.send_command(args)
+  self.read_response()
 }
 
 ///|
