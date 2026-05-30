@@ -205,3 +205,44 @@ async test "resp_parse_nested_array" {
     _ => fail("Expected Array")
   }
 }
+
+async fn assert_parse_fails(input : String) -> Unit {
+  let reader = FixedReader::new(input)
+  let parser = RespParser::new(reader)
+
+  let _ = parser.parse_value() catch {
+    _ => return
+  }
+
+  fail("Expected parse failure")
+}
+
+///|
+async test "resp_parse_fails_on_unknown_type" {
+  assert_parse_fails("?bad\r\n")
+}
+
+///|
+async test "resp_parse_fails_on_invalid_integer" {
+  assert_parse_fails(":abc\r\n")
+}
+
+///|
+async test "resp_parse_fails_on_bulk_missing_crlf" {
+  assert_parse_fails("$3\r\nfooXX")
+}
+
+///|
+async test "resp_parse_fails_on_bulk_short_payload" {
+  assert_parse_fails("$3\r\nfo\r\n")
+}
+
+///|
+async test "resp_parse_fails_on_invalid_bulk_length" {
+  assert_parse_fails("$abc\r\n")
+}
+
+///|
+async test "resp_parse_fails_on_invalid_array_length" {
+  assert_parse_fails("*abc\r\n")
+}
