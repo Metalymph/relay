@@ -8,6 +8,9 @@ pub struct WorkerStats {
   mut dlq_routed : Int
   mut ack_failed : Int
   mut nack_failed : Int
+  started_at_ms : Int64
+  mut last_success_at_ms : Int64?
+  mut last_failure_at_ms : Int64?
 }
 
 ///|
@@ -21,7 +24,20 @@ pub fn WorkerStats::new() -> WorkerStats {
     dlq_routed: 0,
     ack_failed: 0,
     nack_failed: 0,
+    started_at_ms: now_ms(),
+    last_success_at_ms: None,
+    last_failure_at_ms: None,
   }
+}
+
+///|
+pub fn WorkerStats::uptime_ms(self : WorkerStats) -> Int64 {
+  now_ms() - self.started_at_ms
+}
+
+///|
+pub fn WorkerStats::has_failures(self : WorkerStats) -> Bool {
+  self.failed > 0
 }
 
 ///|
@@ -80,12 +96,14 @@ async fn[T] WorkerPool::start_single_worker(
     match result {
       Ok(_) => {
         self.stats.succeeded += 1
+        self.stats.last_success_at_ms = Some(now_ms())
         self.queue.ack(msg.id) catch {
           _ => self.stats.ack_failed += 1
         }
       }
       Err(_) => {
         self.stats.failed += 1
+        self.stats.last_failure_at_ms = Some(now_ms())
 
         let result = self.queue.nack(msg.id) catch {
           _ => {
@@ -101,4 +119,10 @@ async fn[T] WorkerPool::start_single_worker(
       }
     }
   }
+}
+
+///|
+/// now_ms returns current time in milliseconds since epoch.
+fn now_ms() -> Int64 {
+  @env.now().reinterpret_as_int64()
 }
