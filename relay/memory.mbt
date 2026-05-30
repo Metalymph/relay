@@ -19,7 +19,7 @@ pub fn[T] InMemoryBackend::new(
   {
     queue: @aqueue.Queue::new(kind=Blocking(capacity)),
     dlq: @aqueue.Queue::new(kind=Blocking(capacity)),
-    in_flight: @hashmap.new(),
+    in_flight: @hashmap.HashMap([]),
     policy,
     next_id: 1,
     count: 0,

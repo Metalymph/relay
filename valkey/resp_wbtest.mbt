@@ -2,16 +2,20 @@
 struct FixedReader {
   data : Bytes
   mut offset : Int
+  internal_buffer : @io.ReaderBuffer
 }
 
-///|
 fn FixedReader::new(s : String) -> FixedReader {
-  { data: @utf8.encode(s), offset: 0 }
+  {
+    data: @utf8.encode(s),
+    offset: 0,
+    internal_buffer: @io.ReaderBuffer::new(),
+  }
 }
 
 ///|
-impl @io.Reader for FixedReader with _get_internal_buffer(_self) {
-  @io.ReaderBuffer::new()
+impl @io.Reader for FixedReader with _get_internal_buffer(self) {
+  self.internal_buffer
 }
 
 ///|
