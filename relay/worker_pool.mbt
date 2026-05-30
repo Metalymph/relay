@@ -1,8 +1,51 @@
 ///|
+/// WorkerStats tracks basic worker processing counters.
+pub struct WorkerStats {
+  mut processed : Int
+  mut succeeded : Int
+  mut failed : Int
+  mut retries : Int
+  mut dlq_routed : Int
+  mut ack_failed : Int
+  mut nack_failed : Int
+  started_at_ms : Int64
+  mut last_success_at_ms : Int64?
+  mut last_failure_at_ms : Int64?
+}
+
+///|
+/// new creates empty worker stats.
+pub fn WorkerStats::new() -> WorkerStats {
+  {
+    processed: 0,
+    succeeded: 0,
+    failed: 0,
+    retries: 0,
+    dlq_routed: 0,
+    ack_failed: 0,
+    nack_failed: 0,
+    started_at_ms: now_ms(),
+    last_success_at_ms: None,
+    last_failure_at_ms: None,
+  }
+}
+
+///|
+pub fn WorkerStats::uptime_ms(self : WorkerStats) -> Int64 {
+  now_ms() - self.started_at_ms
+}
+
+///|
+pub fn WorkerStats::has_failures(self : WorkerStats) -> Bool {
+  self.failed > 0
+}
+
+///|
 /// WorkerPool manages a group of concurrent workers that process messages from the queue.
 pub struct WorkerPool[T] {
   queue : RelayQueue[T]
   concurrency : Int
+  stats : WorkerStats
 }
 
 ///|
@@ -11,7 +54,13 @@ pub fn[T] WorkerPool::new(
   queue : RelayQueue[T],
   concurrency~ : Int,
 ) -> WorkerPool[T] {
-  { queue, concurrency }
+  { queue, concurrency, stats: WorkerStats::new() }
+}
+
+///|
+/// stats returns the current worker processing counters.
+pub fn[T] WorkerPool::stats(self : WorkerPool[T]) -> WorkerStats {
+  self.stats
 }
 
 ///|
@@ -35,6 +84,8 @@ async fn[T] WorkerPool::start_single_worker(
   for ;; {
     let msg = self.queue.pop() catch { _ => break }
 
+    self.stats.processed += 1
+
     let result = try {
       handler(msg.payload)
       Ok(())
@@ -44,11 +95,34 @@ async fn[T] WorkerPool::start_single_worker(
 
     match result {
       Ok(_) => {
-        let _ = self.queue.ack(msg.id) catch { _ => () }
+        self.stats.succeeded += 1
+        self.stats.last_success_at_ms = Some(now_ms())
+        self.queue.ack(msg.id) catch {
+          _ => self.stats.ack_failed += 1
+        }
       }
       Err(_) => {
-        let _ = self.queue.nack(msg.id) catch { _ => () }
+        self.stats.failed += 1
+        self.stats.last_failure_at_ms = Some(now_ms())
+
+        let result = self.queue.nack(msg.id) catch {
+          _ => {
+            self.stats.nack_failed += 1
+            continue
+          }
+        }
+
+        match result {
+          Requeued => self.stats.retries += 1
+          SentToDlq => self.stats.dlq_routed += 1
+        }
       }
     }
   }
+}
+
+///|
+/// now_ms returns current time in milliseconds since epoch.
+fn now_ms() -> Int64 {
+  @env.now().reinterpret_as_int64()
 }

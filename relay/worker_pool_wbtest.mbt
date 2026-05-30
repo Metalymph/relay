@@ -20,8 +20,17 @@ async test "worker_pool_concurrency" {
     }
   })
 
+  let stats = pool.stats()
+
+  assert_eq(stats.processed, 5)
+  assert_eq(stats.succeeded, 5)
+  assert_eq(stats.failed, 0)
+
   // 5 processed, 0 in flight, 0 in DLQ
   assert_eq(backend.in_flight.length(), 0)
+
+  assert_eq(stats.ack_failed, 0)
+  assert_eq(stats.nack_failed, 0)
 }
 
 ///|
@@ -49,6 +58,15 @@ async test "worker_pool_nack_on_error" {
     }
   })
 
+  let stats = pool.stats()
+
+  assert_eq(stats.processed, 1)
+  assert_eq(stats.succeeded, 0)
+  assert_eq(stats.failed, 1)
+
   // Should have failed and reached DLQ
   assert_eq(backend.dlq_size(), 1)
+
+  assert_eq(stats.ack_failed, 0)
+  assert_eq(stats.nack_failed, 0)
 }

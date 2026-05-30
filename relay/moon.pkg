@@ -3,4 +3,5 @@ import {
   "moonbitlang/async/aqueue" @aqueue,
   "Metalymph/valkey" @valkey,
   "moonbitlang/core/hashmap" @hashmap,
+  "moonbitlang/core/env" @env,
 }
