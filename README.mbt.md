@@ -62,6 +62,18 @@ If you are building a MoonBit application and want to use **Relay** as your mess
 }
 ```
 
+1. Start Valkey locally:
+
+```sh
+docker run --rm -p 6379:6379 valkey/valkey:latest
+```
+
+Run the test suite (optional):
+
+```sh
+moon test --target native
+```
+
 1. Initialize and use the queue in your code:
 
 ```moonbit

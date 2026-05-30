@@ -1,6 +1,7 @@
 import {
-  "moonbitlang/async/io" @io,
   "moonbitlang/async" @async,
+  "moonbitlang/async/io" @io,
+  "moonbitlang/async/socket" @socket,
   "moonbitlang/core/encoding/utf8" @utf8,
-  "moonbitlang/core/string" @string,
+  "moonbitlang/core/string" @string
 }
