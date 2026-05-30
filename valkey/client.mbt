@@ -185,6 +185,62 @@ pub async fn Client::xreadgroup(
 }
 
 ///|
+/// xreadgroup_block reads one payload entry from a stream consumer group,
+/// blocking for up to `block_ms` milliseconds.
+#cfg(target="native")
+pub async fn Client::xreadgroup_block(
+  self : Client,
+  stream : String,
+  group : String,
+  consumer : String,
+  count : Int,
+  block_ms : Int,
+) -> (String, String)? raise Error {
+  match self.request([
+    "XREADGROUP",
+    "GROUP",
+    group,
+    consumer,
+    "COUNT",
+    count.to_string(),
+    "BLOCK",
+    block_ms.to_string(),
+    "STREAMS",
+    stream,
+    ">",
+  ]) {
+    Array(None) => None
+    Array(Some(streams)) => parse_xreadgroup_one(streams)
+    _ => raise ProtocolError("Unexpected XREADGROUP BLOCK response")
+  }
+}
+
+///|
+/// xautoclaim claims one pending stream entry and returns its `(id, payload)`.
+#cfg(target="native")
+pub async fn Client::xautoclaim(
+  self : Client,
+  stream : String,
+  group : String,
+  consumer : String,
+  min_idle_ms : Int,
+) -> (String, String)? raise Error {
+  match self.request([
+    "XAUTOCLAIM",
+    stream,
+    group,
+    consumer,
+    min_idle_ms.to_string(),
+    "0-0",
+    "COUNT",
+    "1",
+  ]) {
+    Array(Some(items)) => parse_xautoclaim_one(items)
+    _ => raise ProtocolError("Unexpected XAUTOCLAIM response")
+  }
+}
+
+///|
 /// xack acknowledges a stream entry and returns the number of acknowledged ids.
 #cfg(target="native")
 pub async fn Client::xack(
@@ -196,6 +252,29 @@ pub async fn Client::xack(
   match self.request(["XACK", stream, group, id]) {
     Integer(n) => n
     _ => raise ProtocolError("Unexpected XACK response")
+  }
+}
+
+///|
+/// xpending_count returns the number of pending entries for a consumer group.
+#cfg(target="native")
+pub async fn Client::xpending_count(
+  self : Client,
+  stream : String,
+  group : String,
+) -> Int64 raise Error {
+  match self.request(["XPENDING", stream, group]) {
+    Array(Some(items)) => {
+      if items.length() == 0 {
+        raise ProtocolError("Unexpected XPENDING response")
+      }
+
+      match items[0] {
+        Integer(count) => count
+        _ => raise ProtocolError("Unexpected XPENDING count")
+      }
+    }
+    _ => raise ProtocolError("Unexpected XPENDING response")
   }
 }
 
@@ -217,35 +296,60 @@ fn parse_xreadgroup_one(
 
       match stream_entry[1] {
         Array(Some(messages)) => {
-          if messages.length() == 0 {
-            return None
-          }
-
-          match messages[0] {
-            Array(Some(message)) => {
-              if message.length() != 2 {
-                raise ProtocolError("Unexpected message shape")
-              }
-
-              let id = match message[0] {
-                BulkString(Some(value)) => value
-                _ => raise ProtocolError("Unexpected stream id")
-              }
-
-              let payload = match message[1] {
-                Array(Some(fields)) => parse_stream_payload(fields)
-                _ => raise ProtocolError("Unexpected stream fields")
-              }
-
-              Some((id, payload))
-            }
-            _ => raise ProtocolError("Unexpected message value")
-          }
+          parse_stream_messages_one(messages)
         }
         _ => raise ProtocolError("Unexpected stream messages")
       }
     }
     _ => raise ProtocolError("Unexpected stream wrapper")
+  }
+}
+
+///|
+/// parse_xautoclaim_one extracts the first `(id, payload)` pair from XAUTOCLAIM.
+#cfg(target="native")
+fn parse_xautoclaim_one(
+  items : Array[RespValue],
+) -> (String, String)? raise Error {
+  if items.length() < 2 {
+    raise ProtocolError("Unexpected XAUTOCLAIM response shape")
+  }
+
+  match items[1] {
+    Array(Some(messages)) => parse_stream_messages_one(messages)
+    _ => raise ProtocolError("Unexpected XAUTOCLAIM messages")
+  }
+}
+
+///|
+/// parse_stream_messages_one extracts the first stream message from a messages array.
+#cfg(target="native")
+fn parse_stream_messages_one(
+  messages : Array[RespValue],
+) -> (String, String)? raise Error {
+  if messages.length() == 0 {
+    return None
+  }
+
+  match messages[0] {
+    Array(Some(message)) => {
+      if message.length() != 2 {
+        raise ProtocolError("Unexpected message shape")
+      }
+
+      let id = match message[0] {
+        BulkString(Some(value)) => value
+        _ => raise ProtocolError("Unexpected stream id")
+      }
+
+      let payload = match message[1] {
+        Array(Some(fields)) => parse_stream_payload(fields)
+        _ => raise ProtocolError("Unexpected stream fields")
+      }
+
+      Some((id, payload))
+    }
+    _ => raise ProtocolError("Unexpected message value")
   }
 }
 
