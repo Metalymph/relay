@@ -78,6 +78,18 @@ pub async fn[T] RedisBackend::pop_nowait(
 }
 
 ///|
+/// size returns the current number of queued messages.
+#cfg(target="native")
+pub async fn[T] RedisBackend::size(
+  self : RedisBackend[T],
+) -> Int raise Error {
+  match self.client.request(["LLEN", self.key]) {
+    @valkey.Integer(n) => n.to_int()
+    _ => raise QueueError::OperationFailed("Unexpected LLEN response")
+  }
+}
+
+///|
 /// ack confirms message processing.
 ///
 /// Current Valkey backend pop semantics remove the message from the list when
@@ -101,16 +113,6 @@ pub async fn[T] RedisBackend::nack(
   _id : String,
 ) -> Unit raise Error {
   ()
-}
-
-///|
-/// size returns the current queue length using LLEN.
-#cfg(target="native")
-pub async fn[T] RedisBackend::size(self : RedisBackend[T]) -> Int raise Error {
-  match self.client.request(["LLEN", self.key]) {
-    @valkey.Integer(n) => n.to_int()
-    _ => raise QueueError::OperationFailed("Unexpected LLEN response")
-  }
 }
 
 ///|
