@@ -201,3 +201,43 @@ async test "valkey_stream_xautoclaim" {
     None => fail("Expected claimed stream message")
   }
 }
+
+///|
+#cfg(target="native")
+async test "valkey_stream_xreadgroup_block" {
+  let client = Client::connect("127.0.0.1", 6381) catch {
+    _ => return
+  }
+
+  let stream = "relay:test:stream:block"
+  let group = "relay:test:stream:block:group"
+  let consumer = "relay:test:stream:block:consumer"
+
+  let _ = client.del(stream) catch { _ => 0L }
+
+  client.xgroup_create(stream, group) catch {
+    e => fail("XGROUP CREATE failed: \{e}")
+  }
+
+  let id = client.xadd(stream, "hello-block") catch {
+    e => fail("XADD failed: \{e}")
+  }
+
+  let msg = client.xreadgroup_block(
+    stream,
+    group,
+    consumer,
+    1,
+    1000,
+  ) catch {
+    e => fail("XREADGROUP BLOCK failed: \{e}")
+  }
+
+  match msg {
+    Some((read_id, payload)) => {
+      assert_eq(read_id, id)
+      assert_eq(payload, "hello-block")
+    }
+    None => fail("Expected stream message")
+  }
+}

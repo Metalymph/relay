@@ -146,3 +146,44 @@ async test "redis_stream_backend_recover_pending" {
     None => fail("Expected recovered pending message")
   }
 }
+
+///|
+#cfg(target="native")
+async test "redis_stream_backend_pop_block" {
+  let client = @valkey.Client::connect("127.0.0.1", 6381) catch {
+    _ => return
+  }
+
+  let stream = "relay:test:stream:block:backend"
+  let group = "relay:test:stream:block:backend:group"
+  let consumer = "relay:test:stream:block:backend:consumer"
+
+  let _ = client.del(stream) catch { _ => 0L }
+
+  let backend = RedisStreamBackend::new(
+    client,
+    stream,
+    group,
+    consumer,
+    serialize=fn(v : String) { v },
+    deserialize=fn(v : String) { v },
+  )
+
+  backend.init() catch {
+    e => fail("init failed: \{e}")
+  }
+
+  backend.push("hello-block") catch {
+    e => fail("push failed: \{e}")
+  }
+
+  let msg = backend.pop_block(1000) catch {
+    e => fail("pop_block failed: \{e}")
+  }
+
+  assert_eq(msg.payload, "hello-block")
+
+  backend.ack(msg.id) catch {
+    e => fail("ack failed: \{e}")
+  }
+}

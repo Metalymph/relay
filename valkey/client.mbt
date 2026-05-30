@@ -185,6 +185,37 @@ pub async fn Client::xreadgroup(
 }
 
 ///|
+/// xreadgroup_block reads one payload entry from a stream consumer group,
+/// blocking for up to `block_ms` milliseconds.
+#cfg(target="native")
+pub async fn Client::xreadgroup_block(
+  self : Client,
+  stream : String,
+  group : String,
+  consumer : String,
+  count : Int,
+  block_ms : Int,
+) -> (String, String)? raise Error {
+  match self.request([
+    "XREADGROUP",
+    "GROUP",
+    group,
+    consumer,
+    "COUNT",
+    count.to_string(),
+    "BLOCK",
+    block_ms.to_string(),
+    "STREAMS",
+    stream,
+    ">",
+  ]) {
+    Array(None) => None
+    Array(Some(streams)) => parse_xreadgroup_one(streams)
+    _ => raise ProtocolError("Unexpected XREADGROUP BLOCK response")
+  }
+}
+
+///|
 /// xautoclaim claims one pending stream entry and returns its `(id, payload)`.
 #cfg(target="native")
 pub async fn Client::xautoclaim(

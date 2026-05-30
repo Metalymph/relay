@@ -56,6 +56,25 @@ pub async fn[T] RedisStreamBackend::pop(
 }
 
 ///|
+/// pop_block waits for a message for up to `block_ms` milliseconds.
+#cfg(target="native")
+pub async fn[T] RedisStreamBackend::pop_block(
+  self : RedisStreamBackend[T],
+  block_ms : Int,
+) -> Message[T] raise Error {
+  match self.client.xreadgroup_block(
+    self.stream,
+    self.group,
+    self.consumer,
+    1,
+    block_ms,
+  ) {
+    Some((id, payload)) => Message::new(id, (self.deserialize)(payload))
+    None => raise QueueError::OperationFailed("No stream message available")
+  }
+}
+
+///|
 /// recover_pending claims one pending message idle for at least `min_idle_ms`.
 #cfg(target="native")
 pub async fn[T] RedisStreamBackend::recover_pending(
