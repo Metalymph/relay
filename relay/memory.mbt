@@ -62,20 +62,23 @@ pub fn[T] InMemoryBackend::ack(self : InMemoryBackend[T], id : String) -> Unit {
 pub async fn[T] InMemoryBackend::nack(
   self : InMemoryBackend[T],
   id : String,
-) -> Unit raise Error {
+) -> NackResult raise Error {
   match self.in_flight.get(id) {
     Some(msg) => {
       self.in_flight.remove(id)
       msg.attempt_count = msg.attempt_count + 1
+
       if msg.attempt_count < self.policy.max_attempts {
         self.queue.put(msg)
         self.count = self.count + 1
+        Requeued
       } else {
         self.dlq.put(msg)
         self.dlq_count = self.dlq_count + 1
+        SentToDlq
       }
     }
-    None => ()
+    None => Requeued
   }
 }
 

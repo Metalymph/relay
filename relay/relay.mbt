@@ -17,13 +17,20 @@ pub fn RetryPolicy::default() -> RetryPolicy {
 }
 
 ///|
+/// Result of a negative acknowledgement.
+pub enum NackResult {
+  Requeued
+  SentToDlq
+}
+
+///|
 /// RelayQueue is the main entry point for interacting with the message queue.
 /// It uses a closure-based backend abstraction to support multiple storage engines (Memory, Redis, etc.).
 pub struct RelayQueue[T] {
   push_fn : async (T) -> Unit raise Error
   pop_fn : async () -> Message[T] raise Error
   ack_fn : async (String) -> Unit raise Error
-  nack_fn : async (String) -> Unit raise Error
+  nack_fn : async (String) -> NackResult raise Error
   size_fn : () -> Int
 }
 
@@ -33,7 +40,7 @@ pub fn[T] RelayQueue::new(
   push~ : async (T) -> Unit raise Error,
   pop~ : async () -> Message[T] raise Error,
   ack~ : async (String) -> Unit raise Error,
-  nack~ : async (String) -> Unit raise Error,
+  nack~ : async (String) -> NackResult raise Error,
   size~ : () -> Int,
 ) -> RelayQueue[T] {
   { push_fn: push, pop_fn: pop, ack_fn: ack, nack_fn: nack, size_fn: size }
@@ -71,7 +78,7 @@ pub async fn[T] RelayQueue::ack(
 pub async fn[T] RelayQueue::nack(
   self : RelayQueue[T],
   id : String,
-) -> Unit raise Error {
+) -> NackResult raise Error {
   (self.nack_fn)(id)
 }
 

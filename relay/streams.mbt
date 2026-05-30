@@ -171,12 +171,16 @@ pub async fn[T] RedisStreamBackend::nack_message(
 /// nack currently leaves the message pending when only an id is available.
 ///
 /// Use `nack_message` when the payload is available and should be moved to DLQ.
+///|
+/// nack leaves the stream message pending when only an id is available.
+///
+/// Use `nack_message` when the payload is available and should be moved to DLQ.
 #cfg(target="native")
 pub async fn[T] RedisStreamBackend::nack(
   _self : RedisStreamBackend[T],
   _id : String,
-) -> Unit raise Error {
-  ()
+) -> NackResult raise Error {
+  Requeued
 }
 
 ///|

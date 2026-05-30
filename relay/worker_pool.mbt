@@ -4,6 +4,8 @@ pub struct WorkerStats {
   mut processed : Int
   mut succeeded : Int
   mut failed : Int
+  mut retries : Int
+  mut dlq_routed : Int
   mut ack_failed : Int
   mut nack_failed : Int
 }
@@ -11,7 +13,15 @@ pub struct WorkerStats {
 ///|
 /// new creates empty worker stats.
 pub fn WorkerStats::new() -> WorkerStats {
-  { processed: 0, succeeded: 0, failed: 0, ack_failed: 0, nack_failed: 0 }
+  {
+    processed: 0,
+    succeeded: 0,
+    failed: 0,
+    retries: 0,
+    dlq_routed: 0,
+    ack_failed: 0,
+    nack_failed: 0,
+  }
 }
 
 ///|
@@ -76,8 +86,17 @@ async fn[T] WorkerPool::start_single_worker(
       }
       Err(_) => {
         self.stats.failed += 1
-        self.queue.nack(msg.id) catch {
-          _ => self.stats.nack_failed += 1
+
+        let result = self.queue.nack(msg.id) catch {
+          _ => {
+            self.stats.nack_failed += 1
+            continue
+          }
+        }
+
+        match result {
+          Requeued => self.stats.retries += 1
+          SentToDlq => self.stats.dlq_routed += 1
         }
       }
     }

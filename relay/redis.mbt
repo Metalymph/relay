@@ -107,12 +107,16 @@ pub async fn[T] RedisBackend::ack(
 ///
 /// Current Valkey backend does not retain the popped payload by id, so nack is
 /// a no-op until in-flight tracking is added.
+///|
+/// nack is a no-op for the list-based Valkey backend.
+///
+/// BLPOP removes the message immediately, so the backend cannot requeue by id.
 #cfg(target="native")
 pub async fn[T] RedisBackend::nack(
   _self : RedisBackend[T],
   _id : String,
-) -> Unit raise Error {
-  ()
+) -> NackResult raise Error {
+  SentToDlq
 }
 
 ///|

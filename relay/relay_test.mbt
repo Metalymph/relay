@@ -15,7 +15,7 @@ async test "in_memory_ack_nack_logic" {
   let msg = queue.pop()
   assert_eq(msg.payload, "data1")
 
-  queue.nack(msg.id)
+  let _ = queue.nack(msg.id)
   assert_eq(queue.size(), 1)
 
   let msg2 = queue.pop()
@@ -35,16 +35,39 @@ async test "in_memory_dlq_logic" {
 
   // Attempt 1
   let msg1 = queue.pop()
-  queue.nack(msg1.id)
+  let _ = queue.nack(msg1.id)
   assert_eq(queue.size(), 1)
   assert_eq(backend.dlq_size(), 0)
 
   // Attempt 2 (Max reached)
   let msg2 = queue.pop()
   assert_eq(msg2.attempt_count, 1)
-  queue.nack(msg2.id)
+  let _ = queue.nack(msg2.id)
 
   // Should be in DLQ now
   assert_eq(queue.size(), 0)
   assert_eq(backend.dlq_size(), 1)
+}
+
+///|
+async test "in_memory_nack_result" {
+  let policy = RetryPolicy::new(2)
+  let backend : InMemoryBackend[String] = InMemoryBackend::new(10, policy~)
+  let queue = backend.to_relay_queue()
+
+  queue.push("retry")
+
+  let msg1 = queue.pop()
+
+  match queue.nack(msg1.id) {
+    Requeued => ()
+    _ => fail("Expected Requeued")
+  }
+
+  let msg2 = queue.pop()
+
+  match queue.nack(msg2.id) {
+    SentToDlq => ()
+    _ => fail("Expected SentToDlq")
+  }
 }
