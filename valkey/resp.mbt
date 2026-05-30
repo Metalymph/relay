@@ -65,6 +65,19 @@ async fn[R : @io.Reader] RespParser::read_line(
 }
 
 ///|
+/// expect_crlf consumes and validates a RESP CRLF terminator.
+async fn[R : @io.Reader] RespParser::expect_crlf(
+  self : RespParser[R],
+) -> Unit raise Error {
+  let cr = self.read_byte()
+  let lf = self.read_byte()
+
+  if cr != 13 || lf != 10 {
+    raise MalformedCrlf
+  }
+}
+
+///|
 /// parse_value decodes a single RespValue from the reader.
 pub async fn[R : @io.Reader] RespParser::parse_value(
   self : RespParser[R],
@@ -90,7 +103,6 @@ pub async fn[R : @io.Reader] RespParser::parse_value(
         let buf = @io.Reader::read_exactly(self.reader, len) catch {
           _ => raise UnexpectedEndOfStream
         }
-        // Consume tailing \r\n
         self.expect_crlf()
         BulkString(Some(@utf8.decode(buf)))
       }
@@ -109,18 +121,5 @@ pub async fn[R : @io.Reader] RespParser::parse_value(
       }
     }
     _ => raise InvalidPrefix(prefix)
-  }
-}
-
-///|
-/// expect_crlf consumes and validates a RESP CRLF terminator.
-async fn[R : @io.Reader] RespParser::expect_crlf(
-  self : RespParser[R],
-) -> Unit raise Error {
-  let cr = self.read_byte()
-  let lf = self.read_byte()
-
-  if cr != 13 || lf != 10 {
-    raise MalformedCrlf
   }
 }
