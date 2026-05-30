@@ -67,3 +67,30 @@ pub async fn[T] RedisStreamBackend::ack(
     raise QueueError::OperationFailed("XACK did not acknowledge message")
   }
 }
+
+///|
+/// nack currently leaves the message pending in the stream consumer group.
+///
+/// The message can later be recovered using pending-entry handling.
+#cfg(target="native")
+pub async fn[T] RedisStreamBackend::nack(
+  _self : RedisStreamBackend[T],
+  _id : String,
+) -> Unit raise Error {
+  ()
+}
+
+///|
+/// to_relay_queue exports the stream backend as a generic RelayQueue.
+#cfg(target="native")
+pub fn[T] RedisStreamBackend::to_relay_queue(
+  self : RedisStreamBackend[T],
+) -> RelayQueue[T] {
+  RelayQueue::new(
+    push=async fn(v) { self.push(v) },
+    pop=async fn() { self.pop() },
+    ack=async fn(id) { self.ack(id) },
+    nack=async fn(id) { self.nack(id) },
+    size=fn() { 0 },
+  )
+}

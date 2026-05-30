@@ -38,3 +38,46 @@ async test "redis_stream_backend_push_pop_ack" {
     e => fail("ack failed: \{e}")
   }
 }
+
+///|
+#cfg(target="native")
+async test "redis_stream_backend_to_relay_queue_push_pop_ack" {
+  let client = @valkey.Client::connect("127.0.0.1", 6381) catch {
+    _ => return
+  }
+
+  let stream = "relay:test:stream:queue"
+  let group = "relay:test:stream:queue:group"
+  let consumer = "relay:test:stream:queue:consumer"
+
+  let _ = client.del(stream) catch { _ => 0L }
+
+  let backend = RedisStreamBackend::new(
+    client,
+    stream,
+    group,
+    consumer,
+    serialize=fn(v : String) { v },
+    deserialize=fn(v : String) { v },
+  )
+
+  backend.init() catch {
+    e => fail("init failed: \{e}")
+  }
+
+  let queue = backend.to_relay_queue()
+
+  queue.push("hello") catch {
+    e => fail("queue push failed: \{e}")
+  }
+
+  let msg = queue.pop() catch {
+    e => fail("queue pop failed: \{e}")
+  }
+
+  assert_eq(msg.payload, "hello")
+
+  queue.ack(msg.id) catch {
+    e => fail("queue ack failed: \{e}")
+  }
+}
