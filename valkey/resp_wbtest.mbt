@@ -101,3 +101,20 @@ test "resp_encode_command_ascii" {
   let encoded = @utf8.decode(encode_command(["PING"]))
   assert_eq(encoded, "*1\r\n$4\r\nPING\r\n")
 }
+
+///|
+#cfg(target="native")
+async test "valkey_client_ping_pong" {
+  let client = Client::connect("127.0.0.1", 6381) catch {
+    _ => return
+  }
+
+  let res = client.request(["PING"]) catch {
+    e => fail("PING failed: \{e}")
+  }
+
+  match res {
+    SimpleString(s) => assert_eq(s, "PONG")
+    _ => fail("Expected PONG")
+  }
+}
