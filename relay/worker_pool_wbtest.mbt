@@ -28,6 +28,9 @@ async test "worker_pool_concurrency" {
 
   // 5 processed, 0 in flight, 0 in DLQ
   assert_eq(backend.in_flight.length(), 0)
+
+  assert_eq(stats.ack_failed, 0)
+  assert_eq(stats.nack_failed, 0)
 }
 
 ///|
@@ -63,4 +66,7 @@ async test "worker_pool_nack_on_error" {
 
   // Should have failed and reached DLQ
   assert_eq(backend.dlq_size(), 1)
+
+  assert_eq(stats.ack_failed, 0)
+  assert_eq(stats.nack_failed, 0)
 }

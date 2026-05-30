@@ -4,12 +4,14 @@ pub struct WorkerStats {
   mut processed : Int
   mut succeeded : Int
   mut failed : Int
+  mut ack_failed : Int
+  mut nack_failed : Int
 }
 
 ///|
 /// new creates empty worker stats.
 pub fn WorkerStats::new() -> WorkerStats {
-  { processed: 0, succeeded: 0, failed: 0 }
+  { processed: 0, succeeded: 0, failed: 0, ack_failed: 0, nack_failed: 0 }
 }
 
 ///|
@@ -68,11 +70,15 @@ async fn[T] WorkerPool::start_single_worker(
     match result {
       Ok(_) => {
         self.stats.succeeded += 1
-        let _ = self.queue.ack(msg.id) catch { _ => () }
+        self.queue.ack(msg.id) catch {
+          _ => self.stats.ack_failed += 1
+        }
       }
       Err(_) => {
         self.stats.failed += 1
-        let _ = self.queue.nack(msg.id) catch { _ => () }
+        self.queue.nack(msg.id) catch {
+          _ => self.stats.nack_failed += 1
+        }
       }
     }
   }
