@@ -2,7 +2,6 @@
 
 ///|
 /// Client is a native Valkey/Redis client supporting asynchronous operations.
-
 pub struct Client {
   conn : @socket.Tcp
 }
@@ -30,7 +29,7 @@ pub async fn Client::connect(host : String, port : Int) -> Client raise Error {
 }
 
 ///|
-/// send_command encodes and sends a RESP (Redis Serialization Protocol) command to the server.
+/// send_command encodes and sends a RESP command to the server.
 #cfg(target="native")
 pub async fn Client::send_command(
   self : Client,
@@ -64,11 +63,50 @@ pub async fn Client::request(
 }
 
 ///|
-/// encode_command encodes command arguments as RESP array of bulk strings.
+/// ping sends a PING command to the server and expects a PONG response.
+#cfg(target="native")
+pub async fn Client::ping(self : Client) -> Unit raise Error {
+  match self.request(["PING"]) {
+    SimpleString("PONG") => ()
+    _ => raise ProtocolError("Expected PONG")
+  }
+}
+
+///|
+/// get returns a string value by key, or None when the key does not exist.
+#cfg(target="native")
+pub async fn Client::get(
+  self : Client,
+  key : String,
+) -> String? raise Error {
+  match self.request(["GET", key]) {
+    BulkString(Some(value)) => Some(value)
+    BulkString(None) => None
+    _ => raise ProtocolError("Unexpected GET response")
+  }
+}
+
+///|
+/// set stores a string value by key.
+#cfg(target="native")
+pub async fn Client::set(
+  self : Client,
+  key : String,
+  value : String,
+) -> Unit raise Error {
+  match self.request(["SET", key, value]) {
+    SimpleString("OK") => ()
+    _ => raise ProtocolError("Expected OK")
+  }
+}
+
+///|
+/// encode_command encodes command arguments as a RESP array of bulk strings.
 fn encode_command(args : Array[String]) -> Bytes {
   let mut cmd = "*" + args.length().to_string() + "\r\n"
   for arg in args {
-    cmd = cmd + "$" + @utf8.encode(arg).length().to_string() + "\r\n" + arg + "\r\n"
+    let bytes = @utf8.encode(arg)
+    cmd = cmd + "$" + bytes.length().to_string() + "\r\n" + arg + "\r\n"
   }
   @utf8.encode(cmd)
 }
