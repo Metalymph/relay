@@ -106,3 +106,45 @@ async test "valkey_exists" {
 
   assert_true(present)
 }
+
+///|
+#cfg(target="native")
+async test "valkey_stream_xadd_read_ack" {
+  let client = Client::connect("127.0.0.1", 6381) catch {
+    _ => return
+  }
+
+  let stream = "relay:test:stream"
+  let group = "relay:test:group"
+  let consumer = "relay:test:consumer"
+
+  let _ = client.del(stream) catch { _ => 0L }
+
+  client.xgroup_create(stream, group) catch {
+    e => fail("XGROUP CREATE failed: \{e}")
+  }
+
+  let id = client.xadd(stream, "hello") catch {
+    e => fail("XADD failed: \{e}")
+  }
+
+  assert_true(id.length() > 0)
+
+  let msg = client.xreadgroup(stream, group, consumer, 1) catch {
+    e => fail("XREADGROUP failed: \{e}")
+  }
+
+  match msg {
+    Some((read_id, payload)) => {
+      assert_eq(read_id, id)
+      assert_eq(payload, "hello")
+
+      let acked = client.xack(stream, group, read_id) catch {
+        e => fail("XACK failed: \{e}")
+      }
+
+      assert_eq(acked, 1L)
+    }
+    None => fail("Expected stream message")
+  }
+}
