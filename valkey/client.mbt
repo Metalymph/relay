@@ -2,6 +2,9 @@
 
 ///|
 /// Client is a native Valkey/Redis client supporting asynchronous operations.
+///|
+/// Client is a native Valkey/Redis client supporting asynchronous operations.
+#cfg(target="native")
 pub struct Client {
   conn : @socket.Tcp
 }
