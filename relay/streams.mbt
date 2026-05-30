@@ -56,6 +56,24 @@ pub async fn[T] RedisStreamBackend::pop(
 }
 
 ///|
+/// recover_pending claims one pending message idle for at least `min_idle_ms`.
+#cfg(target="native")
+pub async fn[T] RedisStreamBackend::recover_pending(
+  self : RedisStreamBackend[T],
+  min_idle_ms : Int,
+) -> Message[T]? raise Error {
+  match self.client.xautoclaim(
+    self.stream,
+    self.group,
+    self.consumer,
+    min_idle_ms,
+  ) {
+    Some((id, payload)) => Some(Message::new(id, (self.deserialize)(payload)))
+    None => None
+  }
+}
+
+///|
 /// ack acknowledges a stream message by id.
 #cfg(target="native")
 pub async fn[T] RedisStreamBackend::ack(

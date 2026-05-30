@@ -148,3 +148,56 @@ async test "valkey_stream_xadd_read_ack" {
     None => fail("Expected stream message")
   }
 }
+
+///|
+#cfg(target="native")
+async test "valkey_stream_xautoclaim" {
+  let client = Client::connect("127.0.0.1", 6381) catch {
+    _ => return
+  }
+
+  let stream = "relay:test:stream:xautoclaim"
+  let group = "relay:test:stream:xautoclaim:group"
+  let consumer1 = "relay:test:stream:xautoclaim:consumer1"
+  let consumer2 = "relay:test:stream:xautoclaim:consumer2"
+
+  let _ = client.del(stream) catch { _ => 0L }
+
+  client.xgroup_create(stream, group) catch {
+    e => fail("XGROUP CREATE failed: \{e}")
+  }
+
+  let id = client.xadd(stream, "recover-me") catch {
+    e => fail("XADD failed: \{e}")
+  }
+
+  let first_read = client.xreadgroup(stream, group, consumer1, 1) catch {
+    e => fail("XREADGROUP failed: \{e}")
+  }
+
+  match first_read {
+    Some((read_id, payload)) => {
+      assert_eq(read_id, id)
+      assert_eq(payload, "recover-me")
+    }
+    None => fail("Expected initial stream message")
+  }
+
+  let claimed = client.xautoclaim(stream, group, consumer2, 0) catch {
+    e => fail("XAUTOCLAIM failed: \{e}")
+  }
+
+  match claimed {
+    Some((claimed_id, payload)) => {
+      assert_eq(claimed_id, id)
+      assert_eq(payload, "recover-me")
+
+      let acked = client.xack(stream, group, claimed_id) catch {
+        e => fail("XACK failed: \{e}")
+      }
+
+      assert_eq(acked, 1L)
+    }
+    None => fail("Expected claimed stream message")
+  }
+}
