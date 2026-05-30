@@ -93,6 +93,15 @@ pub async fn[T] RedisStreamBackend::recover_pending(
 }
 
 ///|
+/// pending_count returns the number of unacknowledged messages.
+#cfg(target="native")
+pub async fn[T] RedisStreamBackend::pending_count(
+  self : RedisStreamBackend[T],
+) -> Int64 raise Error {
+  self.client.xpending_count(self.stream, self.group)
+}
+
+///|
 /// ack acknowledges a stream message by id.
 #cfg(target="native")
 pub async fn[T] RedisStreamBackend::ack(

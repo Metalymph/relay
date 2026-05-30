@@ -241,3 +241,52 @@ async test "valkey_stream_xreadgroup_block" {
     None => fail("Expected stream message")
   }
 }
+
+///|
+#cfg(target="native")
+async test "valkey_stream_xpending_count" {
+  let client = Client::connect("127.0.0.1", 6381) catch {
+    _ => return
+  }
+
+  let stream = "relay:test:stream:pending"
+  let group = "relay:test:stream:pending:group"
+  let consumer = "relay:test:stream:pending:consumer"
+
+  let _ = client.del(stream) catch { _ => 0L }
+
+  client.xgroup_create(stream, group) catch {
+    e => fail("XGROUP CREATE failed: \{e}")
+  }
+
+  let _ = client.xadd(stream, "pending-message") catch {
+    e => fail("XADD failed: \{e}")
+  }
+
+  let msg = client.xreadgroup(stream, group, consumer, 1) catch {
+    e => fail("XREADGROUP failed: \{e}")
+  }
+
+  let pending_before = client.xpending_count(stream, group) catch {
+    e => fail("XPENDING failed: \{e}")
+  }
+
+  assert_eq(pending_before, 1L)
+
+  match msg {
+    Some((id, _)) => {
+      let acked = client.xack(stream, group, id) catch {
+        e => fail("XACK failed: \{e}")
+      }
+
+      assert_eq(acked, 1L)
+    }
+    None => fail("Expected stream message")
+  }
+
+  let pending_after = client.xpending_count(stream, group) catch {
+    e => fail("XPENDING failed: \{e}")
+  }
+
+  assert_eq(pending_after, 0L)
+}

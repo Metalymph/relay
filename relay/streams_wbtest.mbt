@@ -187,3 +187,54 @@ async test "redis_stream_backend_pop_block" {
     e => fail("ack failed: \{e}")
   }
 }
+
+///|
+#cfg(target="native")
+async test "redis_stream_backend_pending_count" {
+  let client = @valkey.Client::connect("127.0.0.1", 6381) catch {
+    _ => return
+  }
+
+  let stream = "relay:test:stream:backend:pending"
+  let group = "relay:test:stream:backend:pending:group"
+  let consumer = "relay:test:stream:backend:pending:consumer"
+
+  let _ = client.del(stream) catch { _ => 0L }
+
+  let backend = RedisStreamBackend::new(
+    client,
+    stream,
+    group,
+    consumer,
+    serialize=fn(v : String) { v },
+    deserialize=fn(v : String) { v },
+  )
+
+  backend.init() catch {
+    e => fail("init failed: \{e}")
+  }
+
+  backend.push("pending") catch {
+    e => fail("push failed: \{e}")
+  }
+
+  let msg = backend.pop() catch {
+    e => fail("pop failed: \{e}")
+  }
+
+  let pending_before = backend.pending_count() catch {
+    e => fail("pending_count failed: \{e}")
+  }
+
+  assert_eq(pending_before, 1L)
+
+  backend.ack(msg.id) catch {
+    e => fail("ack failed: \{e}")
+  }
+
+  let pending_after = backend.pending_count() catch {
+    e => fail("pending_count failed: \{e}")
+  }
+
+  assert_eq(pending_after, 0L)
+}

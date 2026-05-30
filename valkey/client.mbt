@@ -256,6 +256,29 @@ pub async fn Client::xack(
 }
 
 ///|
+/// xpending_count returns the number of pending entries for a consumer group.
+#cfg(target="native")
+pub async fn Client::xpending_count(
+  self : Client,
+  stream : String,
+  group : String,
+) -> Int64 raise Error {
+  match self.request(["XPENDING", stream, group]) {
+    Array(Some(items)) => {
+      if items.length() == 0 {
+        raise ProtocolError("Unexpected XPENDING response")
+      }
+
+      match items[0] {
+        Integer(count) => count
+        _ => raise ProtocolError("Unexpected XPENDING count")
+      }
+    }
+    _ => raise ProtocolError("Unexpected XPENDING response")
+  }
+}
+
+///|
 /// parse_xreadgroup_one extracts the first `(id, payload)` pair from XREADGROUP.
 #cfg(target="native")
 fn parse_xreadgroup_one(
