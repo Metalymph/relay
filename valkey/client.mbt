@@ -101,6 +101,33 @@ pub async fn Client::set(
 }
 
 ///|
+/// del removes a key and returns the number of deleted keys.
+#cfg(target="native")
+pub async fn Client::del(
+  self : Client,
+  key : String,
+) -> Int64 raise Error {
+  match self.request(["DEL", key]) {
+    Integer(n) => n
+    _ => raise ProtocolError("Expected integer DEL response")
+  }
+}
+
+///|
+/// exists returns true when the key exists.
+#cfg(target="native")
+pub async fn Client::exists(
+  self : Client,
+  key : String,
+) -> Bool raise Error {
+  match self.request(["EXISTS", key]) {
+    Integer(0L) => false
+    Integer(_) => true
+    _ => raise ProtocolError("Expected integer EXISTS response")
+  }
+}
+
+///|
 /// encode_command encodes command arguments as a RESP array of bulk strings.
 fn encode_command(args : Array[String]) -> Bytes {
   let mut cmd = "*" + args.length().to_string() + "\r\n"
