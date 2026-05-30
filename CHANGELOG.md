@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on Keep a Changelog,
 and this project adheres to Semantic Versioning.
 
+## [0.3.0] - 2026-05-30
+
+### Added
+
+#### Valkey
+
+- Stream command helpers:
+  - XADD
+  - XGROUP CREATE
+  - XREADGROUP
+  - XREADGROUP BLOCK
+  - XACK
+  - XAUTOCLAIM
+  - XPENDING
+
+#### Relay
+
+- RedisStreamBackend
+- Consumer group support
+- Pending message recovery
+- Blocking stream consumption
+- Dead letter queue support
+- RelayQueue integration for streams
+
+### Reliability
+
+- At-least-once delivery semantics
+- Pending entry inspection
+- Pending entry recovery via XAUTOCLAIM
+- Dead-letter routing
+
 ## [0.2.1] - 2026-05-30
 
 ### Added
