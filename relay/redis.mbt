@@ -61,6 +61,23 @@ pub async fn[T] RedisBackend::pop(
 }
 
 ///|
+/// pop_nowait extracts a message without blocking, returning None when empty.
+#cfg(target="native")
+pub async fn[T] RedisBackend::pop_nowait(
+  self : RedisBackend[T],
+) -> Message[T]? raise Error {
+  match self.client.request(["LPOP", self.key]) {
+    @valkey.BulkString(Some(payload)) => {
+      let id = "valkey:\{self.key}:\{self.next_id}"
+      self.next_id = self.next_id + 1
+      Some(Message::new(id, (self.deserialize)(payload)))
+    }
+    @valkey.BulkString(None) => None
+    _ => raise QueueError::OperationFailed("Unexpected LPOP response")
+  }
+}
+
+///|
 /// ack confirms message processing.
 ///
 /// Current Valkey backend pop semantics remove the message from the list when
