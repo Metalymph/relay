@@ -17,6 +17,8 @@ pub suberror RespError {
   UnexpectedEndOfStream
   /// MalformedNumber occurs when a numeric field is not a valid number.
   MalformedNumber
+  /// MalformedCrlf occurs when a RESP CRLF terminator is invalid.
+  MalformedCrlf
 } derive(Debug, ToJson)
 
 ///|
@@ -89,8 +91,7 @@ pub async fn[R : @io.Reader] RespParser::parse_value(
           _ => raise UnexpectedEndOfStream
         }
         // Consume tailing \r\n
-        let _ = self.read_byte() // \r
-        let _ = self.read_byte() // \n
+        self.expect_crlf()
         BulkString(Some(@utf8.decode(buf)))
       }
     }
@@ -108,5 +109,18 @@ pub async fn[R : @io.Reader] RespParser::parse_value(
       }
     }
     _ => raise InvalidPrefix(prefix)
+  }
+}
+
+///|
+/// expect_crlf consumes and validates a RESP CRLF terminator.
+async fn[R : @io.Reader] RespParser::expect_crlf(
+  self : RespParser[R],
+) -> Unit raise Error {
+  let cr = self.read_byte()
+  let lf = self.read_byte()
+
+  if cr != 13 || lf != 10 {
+    raise MalformedCrlf
   }
 }
