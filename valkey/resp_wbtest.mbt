@@ -118,3 +118,90 @@ async test "valkey_client_ping_pong" {
     _ => fail("Expected PONG")
   }
 }
+
+///|
+async test "resp_parse_error" {
+  let reader = FixedReader::new("-ERR unknown command\r\n")
+  let parser = RespParser::new(reader)
+  let val = parser.parse_value() catch { e => fail("Failed: \{e}") }
+  match val {
+    Error(s) => assert_eq(s, "ERR unknown command")
+    _ => fail("Expected Error")
+  }
+}
+
+///|
+async test "resp_parse_null_bulk_string" {
+  let reader = FixedReader::new("$-1\r\n")
+  let parser = RespParser::new(reader)
+  let val = parser.parse_value() catch { e => fail("Failed: \{e}") }
+  match val {
+    BulkString(None) => ()
+    _ => fail("Expected Null BulkString")
+  }
+}
+
+///|
+async test "resp_parse_empty_bulk_string" {
+  let reader = FixedReader::new("$0\r\n\r\n")
+  let parser = RespParser::new(reader)
+  let val = parser.parse_value() catch { e => fail("Failed: \{e}") }
+  match val {
+    BulkString(Some(s)) => assert_eq(s, "")
+    _ => fail("Expected empty BulkString")
+  }
+}
+
+///|
+async test "resp_parse_null_array" {
+  let reader = FixedReader::new("*-1\r\n")
+  let parser = RespParser::new(reader)
+  let val = parser.parse_value() catch { e => fail("Failed: \{e}") }
+  match val {
+    Array(None) => ()
+    _ => fail("Expected Null Array")
+  }
+}
+
+///|
+async test "resp_parse_empty_array" {
+  let reader = FixedReader::new("*0\r\n")
+  let parser = RespParser::new(reader)
+  let val = parser.parse_value() catch { e => fail("Failed: \{e}") }
+  match val {
+    Array(Some(arr)) => assert_eq(arr.length(), 0)
+    _ => fail("Expected empty Array")
+  }
+}
+
+///|
+async test "resp_parse_nested_array" {
+  let reader = FixedReader::new("*2\r\n*2\r\n+OK\r\n:1\r\n$3\r\nfoo\r\n")
+  let parser = RespParser::new(reader)
+  let val = parser.parse_value() catch { e => fail("Failed: \{e}") }
+
+  match val {
+    Array(Some(arr)) => {
+      assert_eq(arr.length(), 2)
+      match arr[0] {
+        Array(Some(inner)) => {
+          assert_eq(inner.length(), 2)
+          match inner[0] {
+            SimpleString(s) => assert_eq(s, "OK")
+            _ => fail("Expected nested SimpleString")
+          }
+          match inner[1] {
+            Integer(i) => assert_eq(i, 1L)
+            _ => fail("Expected nested Integer")
+          }
+        }
+        _ => fail("Expected nested Array")
+      }
+      match arr[1] {
+        BulkString(Some(s)) => assert_eq(s, "foo")
+        _ => fail("Expected BulkString foo")
+      }
+    }
+    _ => fail("Expected Array")
+  }
+}
