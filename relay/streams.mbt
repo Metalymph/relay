@@ -2,6 +2,7 @@
 pub struct RedisStreamBackend[T] {
   client : @valkey.Client
   stream : String
+  dlq_stream : String
   group : String
   consumer : String
   serialize : (T) -> String
@@ -20,11 +21,25 @@ pub fn[T] RedisStreamBackend::new(
   {
     client,
     stream,
+    dlq_stream: stream + ":dlq",
     group,
     consumer,
     serialize,
     deserialize,
   }
+}
+
+#cfg(target="native")
+pub fn[T] RedisStreamBackend::new_with_dlq(
+  client : @valkey.Client,
+  stream : String,
+  dlq_stream : String,
+  group : String,
+  consumer : String,
+  serialize~ : (T) -> String,
+  deserialize~ : (String) -> T,
+) -> RedisStreamBackend[T] {
+  { client, stream, dlq_stream, group, consumer, serialize, deserialize }
 }
 
 #cfg(target="native")
@@ -130,9 +145,32 @@ pub async fn[T] RedisStreamBackend::ack(
 }
 
 ///|
-/// nack currently leaves the message pending in the stream consumer group.
+/// dead_letter writes a payload to the configured DLQ stream.
+#cfg(target="native")
+pub async fn[T] RedisStreamBackend::dead_letter(
+  self : RedisStreamBackend[T],
+  value : T,
+) -> Unit raise Error {
+  let payload = (self.serialize)(value)
+  let _ = self.client.xadd(self.dlq_stream, payload)
+}
+
+///|
+/// nack_message moves the message payload to the DLQ and acknowledges the
+/// original stream entry.
+#cfg(target="native")
+pub async fn[T] RedisStreamBackend::nack_message(
+  self : RedisStreamBackend[T],
+  msg : Message[T],
+) -> Unit raise Error {
+  self.dead_letter(msg.payload)
+  self.ack(msg.id)
+}
+
+///|
+/// nack currently leaves the message pending when only an id is available.
 ///
-/// The message can later be recovered using pending-entry handling.
+/// Use `nack_message` when the payload is available and should be moved to DLQ.
 #cfg(target="native")
 pub async fn[T] RedisStreamBackend::nack(
   _self : RedisStreamBackend[T],
