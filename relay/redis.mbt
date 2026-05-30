@@ -6,6 +6,7 @@ pub struct RedisBackend[T] {
   key : String
   serialize : (T) -> String
   deserialize : (String) -> T
+  mut next_id : Int
 }
 
 ///|
@@ -14,46 +15,85 @@ pub struct RedisBackend[T] {
 pub fn[T] RedisBackend::new(
   client : @valkey.Client,
   key : String,
-  serialize : (T) -> String,
-  deserialize : (String) -> T,
+  serialize~ : (T) -> String,
+  deserialize~ : (String) -> T,
 ) -> RedisBackend[T] {
-  { client, key, serialize, deserialize }
+  { client, key, serialize, deserialize, next_id: 1 }
 }
 
 ///|
-/// push sends a message to the Redis queue (LPUSH).
+/// push sends a message to the Redis queue using RPUSH.
 #cfg(target="native")
 pub async fn[T] RedisBackend::push(
   self : RedisBackend[T],
   v : T,
 ) -> Unit raise Error {
   let serialized = (self.serialize)(v)
-  self.client.send_command(["LPUSH", self.key, serialized])
+  match self.client.request(["RPUSH", self.key, serialized]) {
+    @valkey.Integer(_) => ()
+    _ => raise QueueError::OperationFailed("Unexpected RPUSH response")
+  }
 }
 
 ///|
-/// pop extracts a message from the Redis queue in a blocking manner (BRPOP).
+/// pop extracts a message from the Redis queue in a blocking manner using BLPOP.
 #cfg(target="native")
 pub async fn[T] RedisBackend::pop(
   self : RedisBackend[T],
 ) -> Message[T] raise Error {
-  self.client.send_command(["BRPOP", self.key, "0"])
-  let mock_payload = (self.deserialize)("mock_data")
-  Message::new("redis_id", mock_payload)
+  match self.client.request(["BLPOP", self.key, "0"]) {
+    @valkey.Array(Some(items)) => {
+      if items.length() != 2 {
+        raise QueueError::OperationFailed("Unexpected BLPOP response length")
+      }
+
+      match items[1] {
+        @valkey.BulkString(Some(payload)) => {
+          let id = "valkey:\{self.key}:\{self.next_id}"
+          self.next_id = self.next_id + 1
+          Message::new(id, (self.deserialize)(payload))
+        }
+        _ => raise QueueError::OperationFailed("Unexpected BLPOP payload")
+      }
+    }
+    _ => raise QueueError::OperationFailed("Unexpected BLPOP response")
+  }
 }
 
 ///|
 /// ack confirms message processing.
+///
+/// Current Valkey backend pop semantics remove the message from the list when
+/// BLPOP returns, so ack is a no-op until visibility-timeout tracking is added.
 #cfg(target="native")
-pub fn[T] RedisBackend::ack(_self : RedisBackend[T], _id : String) -> Unit {
+pub async fn[T] RedisBackend::ack(
+  _self : RedisBackend[T],
+  _id : String,
+) -> Unit raise Error {
   ()
 }
 
 ///|
-/// nack signals processing failure for re-insertion.
+/// nack signals processing failure.
+///
+/// Current Valkey backend does not retain the popped payload by id, so nack is
+/// a no-op until in-flight tracking is added.
 #cfg(target="native")
-pub fn[T] RedisBackend::nack(_self : RedisBackend[T], _id : String) -> Unit {
+pub async fn[T] RedisBackend::nack(
+  _self : RedisBackend[T],
+  _id : String,
+) -> Unit raise Error {
   ()
+}
+
+///|
+/// size returns the current queue length using LLEN.
+#cfg(target="native")
+pub async fn[T] RedisBackend::size(self : RedisBackend[T]) -> Int raise Error {
+  match self.client.request(["LLEN", self.key]) {
+    @valkey.Integer(n) => n.to_int()
+    _ => raise QueueError::OperationFailed("Unexpected LLEN response")
+  }
 }
 
 ///|
@@ -63,8 +103,8 @@ pub fn[T] RedisBackend::to_relay_queue(self : RedisBackend[T]) -> RelayQueue[T] 
   RelayQueue::new(
     push=async fn(v) { self.push(v) },
     pop=async fn() { self.pop() },
-    ack=fn(id) { self.ack(id) },
-    nack=fn(id) { self.nack(id) },
+    ack=async fn(id) { self.ack(id) },
+    nack=async fn(id) { self.nack(id) },
     size=fn() { 0 },
   )
 }
