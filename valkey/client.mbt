@@ -2,7 +2,7 @@
 
 ///|
 /// Client is a native Valkey/Redis client supporting asynchronous operations.
-#cfg(target="native")
+
 pub struct Client {
   conn : @socket.Tcp
 }
@@ -36,11 +36,7 @@ pub async fn Client::send_command(
   self : Client,
   args : Array[String],
 ) -> Unit raise Error {
-  let mut cmd = "*" + args.length().to_string() + "\r\n"
-  for arg in args {
-    cmd = cmd + "$" + arg.length().to_string() + "\r\n" + arg + "\r\n"
-  }
-  let data = @utf8.encode(cmd)
+  let data = encode_command(args)
   @io.Writer::write(self.conn, data) catch {
     e => raise ConnectionError("Write failed: \{e}")
   }
@@ -65,6 +61,16 @@ pub async fn Client::request(
 ) -> RespValue raise Error {
   self.send_command(args)
   self.read_response()
+}
+
+///|
+/// encode_command encodes command arguments as RESP array of bulk strings.
+fn encode_command(args : Array[String]) -> Bytes {
+  let mut cmd = "*" + args.length().to_string() + "\r\n"
+  for arg in args {
+    cmd = cmd + "$" + @utf8.encode(arg).length().to_string() + "\r\n" + arg + "\r\n"
+  }
+  @utf8.encode(cmd)
 }
 
 ///|

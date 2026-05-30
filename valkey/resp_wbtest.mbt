@@ -81,3 +81,23 @@ async test "resp_parse_array" {
     _ => fail("Expected Array")
   }
 }
+
+///|
+test "resp_encode_command_uses_utf8_byte_lengths" {
+  let encoded = @utf8.decode(encode_command(["SET", "city", "città"]))
+
+  assert_eq(encoded, "*3\r\n$3\r\nSET\r\n$4\r\ncity\r\n$6\r\ncittà\r\n")
+}
+
+///|
+test "resp_encode_command_uses_utf8_byte_lengths_for_emoji" {
+  let encoded = @utf8.decode(encode_command(["SET", "emoji", "🚀"]))
+
+  assert_eq(encoded, "*3\r\n$3\r\nSET\r\n$5\r\nemoji\r\n$4\r\n🚀\r\n")
+}
+
+///|
+test "resp_encode_command_ascii" {
+  let encoded = @utf8.decode(encode_command(["PING"]))
+  assert_eq(encoded, "*1\r\n$4\r\nPING\r\n")
+}
