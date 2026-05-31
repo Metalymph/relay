@@ -119,3 +119,12 @@ pub fn[T] InMemoryBackend::queue_metrics(
     pending_count: None,
   }
 }
+
+pub fn[T] InMemoryBackend::health(
+  _ : InMemoryBackend[T],
+) -> BackendHealth {
+  {
+    healthy: true,
+    message: None,
+  }
+}
