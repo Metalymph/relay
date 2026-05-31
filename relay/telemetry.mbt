@@ -55,3 +55,51 @@ pub fn RelaySnapshot::new(metrics : RelayMetrics) -> RelaySnapshot {
     metrics,
   }
 }
+
+///|
+/// is_healthy returns true when health is present and healthy.
+pub fn RelaySnapshot::is_healthy(self : RelaySnapshot) -> Bool {
+  match self.metrics.health {
+    Some(health) => health.healthy
+    None => false
+  }
+}
+
+///|
+/// has_failures returns true when worker failures or ack/nack failures are present.
+pub fn RelaySnapshot::has_failures(self : RelaySnapshot) -> Bool {
+  match self.metrics.worker {
+    Some(worker) =>
+      worker.failed > 0 ||
+      worker.ack_failed > 0 ||
+      worker.nack_failed > 0
+    None => false
+  }
+}
+
+///|
+/// queue_size returns the known queue size, if available.
+pub fn RelaySnapshot::queue_size(self : RelaySnapshot) -> Int? {
+  match self.metrics.queue {
+    Some(queue) => queue.size
+    None => None
+  }
+}
+
+///|
+/// dlq_size returns the known DLQ size, if available.
+pub fn RelaySnapshot::dlq_size(self : RelaySnapshot) -> Int? {
+  match self.metrics.queue {
+    Some(queue) => queue.dlq_size
+    None => None
+  }
+}
+
+///|
+/// pending_count returns the known pending message count, if available.
+pub fn RelaySnapshot::pending_count(self : RelaySnapshot) -> Int64? {
+  match self.metrics.queue {
+    Some(queue) => queue.pending_count
+    None => None
+  }
+}

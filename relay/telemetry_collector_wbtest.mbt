@@ -62,7 +62,7 @@ test "collect_snapshot" {
   let snapshot = collect_snapshot(None, Some(queue), Some(health))
 
   assert_true(snapshot.collected_at_ms > 0L)
-  assert_true(snapshot.metrics.worker is Some(_))
+  assert_true(snapshot.metrics.worker is None)
   assert_true(snapshot.metrics.queue is Some(_))
   assert_true(snapshot.metrics.health is Some(_))
 }
