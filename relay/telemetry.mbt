@@ -103,3 +103,62 @@ pub fn RelaySnapshot::pending_count(self : RelaySnapshot) -> Int64? {
     None => None
   }
 }
+
+///|
+/// status returns a high-level health status for the snapshot.
+pub fn RelaySnapshot::status(self : RelaySnapshot) -> SystemStatus {
+  match self.metrics.health {
+    Some(health) if !health.healthy => Unhealthy
+    _ if self.has_failures() => Degraded
+    _ => Healthy
+  }
+}
+
+///|
+/// requires_attention returns true when the snapshot is degraded or unhealthy.
+pub fn RelaySnapshot::requires_attention(self : RelaySnapshot) -> Bool {
+  match self.status() {
+    Healthy => false
+    Degraded | Unhealthy => true
+  }
+}
+
+///|
+/// status_message returns a short human-readable status summary.
+pub fn RelaySnapshot::status_message(self : RelaySnapshot) -> String {
+  match self.status() {
+    Healthy => "Relay is healthy"
+    Degraded => "Relay is degraded"
+    Unhealthy =>
+      match self.metrics.health {
+        Some(health) =>
+          match health.message {
+            Some(msg) => "Relay is unhealthy: " + msg
+            None => "Relay is unhealthy"
+          }
+        None => "Relay is unhealthy"
+      }
+  }
+}
+
+///|
+/// SystemStatus summarizes the current observable state of Relay.
+pub enum SystemStatus {
+  Healthy
+  Degraded
+  Unhealthy
+} derive(Debug, Eq, ToJson)
+
+///|
+impl Show for SystemStatus with output(self, logger) {
+  logger.write_string(self.to_string())
+}
+
+///|
+pub fn SystemStatus::to_string(self : SystemStatus) -> String {
+  match self {
+    Healthy => "Healthy"
+    Degraded => "Degraded"
+    Unhealthy => "Unhealthy"
+  }
+}
