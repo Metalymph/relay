@@ -5,11 +5,7 @@ pub fn collect(
   queue : QueueMetrics?,
   health : BackendHealth?,
 ) -> RelayMetrics {
-  {
-    worker,
-    queue,
-    health,
-  }
+  { worker, queue, health }
 }
 
 ///|
@@ -18,11 +14,7 @@ pub fn collect_worker(
   worker : WorkerMetrics,
   health : BackendHealth,
 ) -> RelayMetrics {
-  {
-    worker: Some(worker),
-    queue: None,
-    health: Some(health),
-  }
+  { worker: Some(worker), queue: None, health: Some(health) }
 }
 
 ///|
@@ -31,11 +23,7 @@ pub fn collect_queue(
   queue : QueueMetrics,
   health : BackendHealth,
 ) -> RelayMetrics {
-  {
-    worker: None,
-    queue: Some(queue),
-    health: Some(health),
-  }
+  { worker: None, queue: Some(queue), health: Some(health) }
 }
 
 ///|
@@ -45,27 +33,20 @@ pub fn collect_snapshot(
   queue : QueueMetrics?,
   health : BackendHealth?,
 ) -> RelaySnapshot {
-  RelaySnapshot::new({
-    worker,
-    queue,
-    health,
-  })
+  RelaySnapshot::new({ worker, queue, health })
 }
 
+///|
 test "telemetry_snapshot_inspection_helpers" {
   let worker : WorkerMetrics = {
     processed: 10,
     succeeded: 8,
     failed: 2,
-
     retries: 1,
     dlq_routed: 1,
-
     ack_failed: 0,
     nack_failed: 0,
-
     uptime_ms: 1000,
-
     last_success_at_ms: None,
     last_failure_at_ms: Some(100L),
   }
@@ -76,20 +57,25 @@ test "telemetry_snapshot_inspection_helpers" {
     pending_count: Some(2L),
   }
 
-  let health : BackendHealth = {
-    healthy: true,
-    message: None,
-  }
+  let health : BackendHealth = { healthy: true, message: None }
 
-  let snapshot = RelaySnapshot::new({
-    worker: Some(worker),
-    queue: Some(queue),
-    health: Some(health),
-  })
+  let snapshot = RelaySnapshot::new({ worker: Some(worker), queue: Some(queue), health: Some(health) })
 
   assert_true(snapshot.is_healthy())
   assert_true(snapshot.has_failures())
-  assert_eq(snapshot.queue_size(), Some(3))
-  assert_eq(snapshot.dlq_size(), Some(1))
-  assert_eq(snapshot.pending_count(), Some(2L))
+
+  match snapshot.queue_size() {
+    Some(n) => assert_eq(n, 3)
+    None => fail("Expected queue size")
+  }
+  
+  match snapshot.dlq_size() {
+    Some(n) => assert_eq(n, 1)
+    None => fail("Expected DLQ size")
+  }
+
+  match snapshot.pending_count() {
+    Some(n) => assert_eq(n, 2L)
+    None => fail("Expected pending count")
+  }
 }
