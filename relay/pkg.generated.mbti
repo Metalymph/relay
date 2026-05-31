@@ -18,6 +18,8 @@ pub fn collect_worker(WorkerMetrics, BackendHealth) -> RelayMetrics
 
 pub fn inspect(RelaySnapshot) -> QueueInspection
 
+pub fn report(QueueInspection) -> AdminReport
+
 pub async fn[T] start_worker(RelayQueue[T], (Message[T]) -> Unit) -> Unit
 
 // Errors
@@ -26,6 +28,17 @@ pub suberror QueueError {
 } derive(ToJson, @debug.Debug)
 
 // Types and methods
+pub struct AdminReport {
+  status : SystemStatus
+  requires_attention : Bool
+  queue_size : Int?
+  dlq_size : Int?
+  pending_count : Int64?
+  summary : String
+}
+pub fn AdminReport::has_incidents(Self) -> Bool
+pub fn AdminReport::is_healthy(Self) -> Bool
+
 pub struct BackendHealth {
   healthy : Bool
   message : String?
@@ -78,6 +91,10 @@ pub struct QueueInspection {
   pending_count : Int64?
   backend_healthy : Bool
 }
+pub fn QueueInspection::has_dlq(Self) -> Bool
+pub fn QueueInspection::has_pending(Self) -> Bool
+pub fn QueueInspection::is_empty(Self) -> Bool
+pub fn QueueInspection::summary(Self) -> String
 
 pub struct QueueMetrics {
   size : Int?
