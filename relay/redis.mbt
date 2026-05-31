@@ -144,3 +144,14 @@ pub fn[T] RedisBackend::queue_metrics(
     pending_count: None,
   }
 }
+
+#cfg(target="native")
+pub async fn[T] RedisBackend::queue_metrics_async(
+  self : RedisBackend[T],
+) -> QueueMetrics raise Error {
+  {
+    size: Some(self.size()),
+    dlq_size: None,
+    pending_count: None,
+  }
+}
