@@ -215,3 +215,14 @@ pub fn[T] RedisStreamBackend::to_relay_queue_with_recovery(
     size=fn() { 0 },
   )
 }
+
+#cfg(target="native")
+pub fn[T] RedisStreamBackend::queue_metrics(
+  self : RedisStreamBackend[T],
+) -> QueueMetrics {
+  {
+    size: None,
+    dlq_size: None,
+    pending_count: None,
+  }
+}

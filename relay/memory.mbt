@@ -107,3 +107,15 @@ pub fn[T] InMemoryBackend::to_relay_queue(
     size=fn() { self.count },
   )
 }
+
+///|
+/// queue_metrics returns the current queue metrics.
+pub fn[T] InMemoryBackend::queue_metrics(
+  self : InMemoryBackend[T],
+) -> QueueMetrics {
+  {
+    size: Some(self.count),
+    dlq_size: Some(self.dlq_count),
+    pending_count: None,
+  }
+}

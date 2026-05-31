@@ -131,3 +131,16 @@ pub fn[T] RedisBackend::to_relay_queue(self : RedisBackend[T]) -> RelayQueue[T] 
     size=fn() { 0 },
   )
 }
+
+///| 
+/// queue_metrics returns the current queue metrics.
+#cfg(target="native")
+pub fn[T] RedisBackend::queue_metrics(
+  _self : RedisBackend[T],
+) -> QueueMetrics {
+  {
+    size: None,
+    dlq_size: None,
+    pending_count: None,
+  }
+}
