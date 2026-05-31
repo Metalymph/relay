@@ -173,3 +173,10 @@ pub async fn[T] RedisBackend::health(
     }
   }
 }
+
+#cfg(target="native")
+pub fn[T] RedisBackend::capabilities(
+  self : RedisBackend[T],
+) -> BackendCapabilities {
+  BackendCapabilities::redis_lists()
+}

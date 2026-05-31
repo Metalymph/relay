@@ -255,3 +255,10 @@ pub async fn[T] RedisStreamBackend::health(
     }
   }
 }
+
+#cfg(target="native")
+pub fn[T] RedisStreamBackend::capabilities(
+  self : RedisStreamBackend[T],
+) -> BackendCapabilities {
+  BackendCapabilities::redis_streams()
+}
