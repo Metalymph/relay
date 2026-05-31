@@ -13,6 +13,12 @@ pub suberror RespError {
   InvalidPrefix(Int)
   UnexpectedEndOfStream
   MalformedNumber
+  MalformedCrlf
+} derive(ToJson, @debug.Debug)
+
+pub suberror ValkeyError {
+  ConnectionError(String)
+  ProtocolError(String)
 } derive(ToJson, @debug.Debug)
 
 // Types and methods
