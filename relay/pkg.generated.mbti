@@ -8,6 +8,16 @@ import {
 }
 
 // Values
+pub fn collect(WorkerMetrics?, QueueMetrics?, BackendHealth?) -> RelayMetrics
+
+pub fn collect_queue(QueueMetrics, BackendHealth) -> RelayMetrics
+
+pub fn collect_snapshot(WorkerMetrics?, QueueMetrics?, BackendHealth?) -> RelaySnapshot
+
+pub fn collect_worker(WorkerMetrics, BackendHealth) -> RelayMetrics
+
+pub fn inspect(RelaySnapshot) -> QueueInspection
+
 pub async fn[T] start_worker(RelayQueue[T], (Message[T]) -> Unit) -> Unit
 
 // Errors
@@ -16,6 +26,11 @@ pub suberror QueueError {
 } derive(ToJson, @debug.Debug)
 
 // Types and methods
+pub struct BackendHealth {
+  healthy : Bool
+  message : String?
+}
+
 pub struct Dashboard[T] {
   queue : RelayQueue[T]
   backend : InMemoryBackend[T]
@@ -35,10 +50,12 @@ pub struct InMemoryBackend[T] {
 }
 pub fn[T] InMemoryBackend::ack(Self[T], String) -> Unit
 pub fn[T] InMemoryBackend::dlq_size(Self[T]) -> Int
-pub async fn[T] InMemoryBackend::nack(Self[T], String) -> Unit
+pub fn[T] InMemoryBackend::health(Self[T]) -> BackendHealth
+pub async fn[T] InMemoryBackend::nack(Self[T], String) -> NackResult
 pub fn[T] InMemoryBackend::new(Int, policy? : RetryPolicy) -> Self[T]
 pub async fn[T] InMemoryBackend::pop(Self[T]) -> Message[T]
 pub async fn[T] InMemoryBackend::push(Self[T], T) -> Unit
+pub fn[T] InMemoryBackend::queue_metrics(Self[T]) -> QueueMetrics
 pub fn[T] InMemoryBackend::size(Self[T]) -> Int
 pub fn[T] InMemoryBackend::to_relay_queue(Self[T]) -> RelayQueue[T]
 
@@ -49,19 +66,58 @@ pub struct Message[T] {
 }
 pub fn[T] Message::new(String, T, attempt_count? : Int) -> Self[T]
 
+pub enum NackResult {
+  Requeued
+  SentToDlq
+}
+
+pub struct QueueInspection {
+  status : SystemStatus
+  queue_size : Int?
+  dlq_size : Int?
+  pending_count : Int64?
+  backend_healthy : Bool
+}
+
+pub struct QueueMetrics {
+  size : Int?
+  dlq_size : Int?
+  pending_count : Int64?
+}
+
+pub struct RelayMetrics {
+  worker : WorkerMetrics?
+  queue : QueueMetrics?
+  health : BackendHealth?
+}
+
 pub struct RelayQueue[T] {
   push_fn : async (T) -> Unit
   pop_fn : async () -> Message[T]
   ack_fn : async (String) -> Unit
-  nack_fn : async (String) -> Unit
+  nack_fn : async (String) -> NackResult
   size_fn : () -> Int
 }
 pub async fn[T] RelayQueue::ack(Self[T], String) -> Unit
-pub async fn[T] RelayQueue::nack(Self[T], String) -> Unit
-pub fn[T] RelayQueue::new(push~ : async (T) -> Unit, pop~ : async () -> Message[T], ack~ : async (String) -> Unit, nack~ : async (String) -> Unit, size~ : () -> Int) -> Self[T]
+pub async fn[T] RelayQueue::nack(Self[T], String) -> NackResult
+pub fn[T] RelayQueue::new(push~ : async (T) -> Unit, pop~ : async () -> Message[T], ack~ : async (String) -> Unit, nack~ : async (String) -> NackResult, size~ : () -> Int) -> Self[T]
 pub async fn[T] RelayQueue::pop(Self[T]) -> Message[T]
 pub async fn[T] RelayQueue::push(Self[T], T) -> Unit
 pub fn[T] RelayQueue::size(Self[T]) -> Int
+
+pub struct RelaySnapshot {
+  collected_at_ms : Int64
+  metrics : RelayMetrics
+}
+pub fn RelaySnapshot::dlq_size(Self) -> Int?
+pub fn RelaySnapshot::has_failures(Self) -> Bool
+pub fn RelaySnapshot::is_healthy(Self) -> Bool
+pub fn RelaySnapshot::new(RelayMetrics) -> Self
+pub fn RelaySnapshot::pending_count(Self) -> Int64?
+pub fn RelaySnapshot::queue_size(Self) -> Int?
+pub fn RelaySnapshot::requires_attention(Self) -> Bool
+pub fn RelaySnapshot::status(Self) -> SystemStatus
+pub fn RelaySnapshot::status_message(Self) -> String
 
 pub struct RetryPolicy {
   max_attempts : Int
@@ -69,12 +125,51 @@ pub struct RetryPolicy {
 pub fn RetryPolicy::default() -> Self
 pub fn RetryPolicy::new(Int) -> Self
 
+pub enum SystemStatus {
+  Healthy
+  Degraded
+  Unhealthy
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SystemStatus::to_string(Self) -> String
+
+pub struct WorkerMetrics {
+  processed : Int
+  succeeded : Int
+  failed : Int
+  retries : Int
+  dlq_routed : Int
+  ack_failed : Int
+  nack_failed : Int
+  uptime_ms : Int64
+  last_success_at_ms : Int64?
+  last_failure_at_ms : Int64?
+}
+
 pub struct WorkerPool[T] {
   queue : RelayQueue[T]
   concurrency : Int
+  stats : WorkerStats
 }
+pub fn[T] WorkerPool::metrics(Self[T]) -> WorkerMetrics
 pub fn[T] WorkerPool::new(RelayQueue[T], concurrency~ : Int) -> Self[T]
 pub async fn[T] WorkerPool::run(Self[T], async (T) -> Unit) -> Unit
+pub fn[T] WorkerPool::stats(Self[T]) -> WorkerStats
+
+pub struct WorkerStats {
+  mut processed : Int
+  mut succeeded : Int
+  mut failed : Int
+  mut retries : Int
+  mut dlq_routed : Int
+  mut ack_failed : Int
+  mut nack_failed : Int
+  started_at_ms : Int64
+  mut last_success_at_ms : Int64?
+  mut last_failure_at_ms : Int64?
+}
+pub fn WorkerStats::has_failures(Self) -> Bool
+pub fn WorkerStats::new() -> Self
+pub fn WorkerStats::uptime_ms(Self) -> Int64
 
 // Type aliases
 
