@@ -51,3 +51,51 @@ pub fn incident_count(
 ) -> Int {
   detect_incidents(report).length()
 }
+
+///|
+/// IncidentSeverity describes the operational severity of an incident.
+pub enum IncidentSeverity {
+  Info
+  Warning
+  Critical
+} derive(Eq, ToJson, Debug)
+
+///|
+/// severity returns the operational severity of an incident.
+pub fn Incident::severity(self : Incident) -> IncidentSeverity {
+  match self {
+    BackendUnavailable => Critical
+    DeadLetterMessages => Critical
+    WorkerFailures => Warning
+    PendingMessages => Warning
+  }
+}
+
+///|
+/// highest_severity returns the highest severity among incidents.
+pub fn highest_severity(incidents : Array[Incident]) -> IncidentSeverity? {
+  let mut highest : IncidentSeverity? = None
+
+  for incident in incidents {
+    let severity = incident.severity()
+
+    match highest {
+      None => highest = Some(severity)
+      Some(current) =>
+        if severity_rank(severity) > severity_rank(current) {
+          highest = Some(severity)
+        }
+    }
+  }
+
+  highest
+}
+
+///|
+fn severity_rank(severity : IncidentSeverity) -> Int {
+  match severity {
+    Info => 0
+    Warning => 1
+    Critical => 2
+  }
+}
