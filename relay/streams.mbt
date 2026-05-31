@@ -226,3 +226,14 @@ pub fn[T] RedisStreamBackend::queue_metrics(
     pending_count: None,
   }
 }
+
+#cfg(target="native")
+pub async fn[T] RedisStreamBackend::queue_metrics_async(
+  self : RedisStreamBackend[T],
+) -> QueueMetrics raise Error {
+  {
+    size: None,
+    dlq_size: None,
+    pending_count: Some(self.pending_count()),
+  }
+}
