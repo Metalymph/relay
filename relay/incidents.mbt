@@ -61,6 +61,17 @@ pub enum IncidentSeverity {
 } derive(Eq, ToJson, Debug)
 
 ///|
+pub fn IncidentSeverity::to_string(
+  self : IncidentSeverity,
+) -> String {
+  match self {
+    Info => "Info"
+    Warning => "Warning"
+    Critical => "Critical"
+  }
+}
+
+///|
 /// severity returns the operational severity of an incident.
 pub fn Incident::severity(self : Incident) -> IncidentSeverity {
   match self {
