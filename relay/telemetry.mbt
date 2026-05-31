@@ -31,4 +31,11 @@ pub struct QueueMetrics {
 pub struct RelayMetrics {
   worker : WorkerMetrics?
   queue : QueueMetrics?
+  health : BackendHealth?
+}
+
+///|
+pub struct BackendHealth {
+  healthy : Bool
+  message : String?
 }

@@ -155,3 +155,21 @@ pub async fn[T] RedisBackend::queue_metrics_async(
     pending_count: None,
   }
 }
+
+#cfg(target="native")
+pub async fn[T] RedisBackend::health(
+  self : RedisBackend[T],
+) -> BackendHealth {
+  try {
+    let _ = self.client.ping()
+    {
+      healthy: true,
+      message: None,
+    }
+  } catch {
+    e => {
+      healthy: false,
+      message: Some(e.to_string()),
+    }
+  }
+}

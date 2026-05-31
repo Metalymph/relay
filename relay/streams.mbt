@@ -237,3 +237,21 @@ pub async fn[T] RedisStreamBackend::queue_metrics_async(
     pending_count: Some(self.pending_count()),
   }
 }
+
+#cfg(target="native")
+pub async fn[T] RedisStreamBackend::health(
+  self : RedisStreamBackend[T],
+) -> BackendHealth {
+  try {
+    let _ = self.client.ping()
+    {
+      healthy: true,
+      message: None,
+    }
+  } catch {
+    e => {
+      healthy: false,
+      message: Some(e.to_string()),
+    }
+  }
+}

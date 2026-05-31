@@ -16,10 +16,16 @@ test "collect_worker_only" {
     last_failure_at_ms: None,
   }
 
-  let snapshot = collect_worker(metrics)
+  let health : BackendHealth = {
+    healthy: true,
+    message: None,
+  }
+
+  let snapshot = collect_worker(metrics, health)
 
   assert_true(snapshot.worker is Some(_))
   assert_true(snapshot.queue is None)
+  assert_true(snapshot.health is Some(_))
 }
 
 test "collect_queue_only" {
@@ -29,8 +35,14 @@ test "collect_queue_only" {
     pending_count: None,
   }
 
-  let snapshot = collect_queue(metrics)
+  let health : BackendHealth = {
+    healthy: true,
+    message: None,
+  }
+
+  let snapshot = collect_queue(metrics, health)
 
   assert_true(snapshot.worker is None)
   assert_true(snapshot.queue is Some(_))
+  assert_true(snapshot.health is Some(_))
 }

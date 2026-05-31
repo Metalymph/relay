@@ -3,27 +3,37 @@
 pub fn collect(
   worker : WorkerMetrics?,
   queue : QueueMetrics?,
+  health : BackendHealth?,
 ) -> RelayMetrics {
   {
     worker,
     queue,
+    health,
   }
 }
 
 ///|
 /// collect_worker creates a telemetry snapshot containing only worker metrics.
-pub fn collect_worker(worker : WorkerMetrics) -> RelayMetrics {
+pub fn collect_worker(
+  worker : WorkerMetrics,
+  health : BackendHealth,
+) -> RelayMetrics {
   {
     worker: Some(worker),
     queue: None,
+    health: Some(health),
   }
 }
 
 ///|
 /// collect_queue creates a telemetry snapshot containing only queue metrics.
-pub fn collect_queue(queue : QueueMetrics) -> RelayMetrics {
+pub fn collect_queue(
+  queue : QueueMetrics,
+  health : BackendHealth,
+) -> RelayMetrics {
   {
     worker: None,
     queue: Some(queue),
+    health: Some(health),
   }
 }
