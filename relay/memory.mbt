@@ -128,3 +128,9 @@ pub fn[T] InMemoryBackend::health(
     message: None,
   }
 }
+
+pub fn[T] InMemoryBackend::capabilities(
+  _ : InMemoryBackend[T],
+) -> BackendCapabilities {
+  BackendCapabilities::in_memory()
+}
