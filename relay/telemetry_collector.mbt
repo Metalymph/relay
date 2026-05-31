@@ -1,5 +1,5 @@
 ///|
-/// collect combines worker and queue telemetry into a single snapshot.
+/// collect combines worker, queue, and backend health telemetry into a single snapshot.
 pub fn collect(
   worker : WorkerMetrics?,
   queue : QueueMetrics?,
@@ -36,4 +36,18 @@ pub fn collect_queue(
     queue: Some(queue),
     health: Some(health),
   }
+}
+
+///|
+/// collect_snapshot combines telemetry and wraps it in a timestamped snapshot.
+pub fn collect_snapshot(
+  worker : WorkerMetrics?,
+  queue : QueueMetrics?,
+  health : BackendHealth?,
+) -> RelaySnapshot {
+  RelaySnapshot::new({
+    worker,
+    queue,
+    health,
+  })
 }

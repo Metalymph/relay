@@ -46,3 +46,23 @@ test "collect_queue_only" {
   assert_true(snapshot.queue is Some(_))
   assert_true(snapshot.health is Some(_))
 }
+
+test "collect_snapshot" {
+  let queue : QueueMetrics = {
+    size: Some(3),
+    dlq_size: Some(1),
+    pending_count: None,
+  }
+
+  let health : BackendHealth = {
+    healthy: true,
+    message: None,
+  }
+
+  let snapshot = collect_snapshot(None, Some(queue), Some(health))
+
+  assert_true(snapshot.collected_at_ms > 0L)
+  assert_true(snapshot.metrics.worker is Some(_))
+  assert_true(snapshot.metrics.queue is Some(_))
+  assert_true(snapshot.metrics.health is Some(_))
+}

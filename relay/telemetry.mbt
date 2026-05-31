@@ -39,3 +39,19 @@ pub struct BackendHealth {
   healthy : Bool
   message : String?
 }
+
+///|
+/// RelaySnapshot represents a metrics snapshot collected at a specific time.
+pub struct RelaySnapshot {
+  collected_at_ms : Int64
+  metrics : RelayMetrics
+}
+
+///|
+/// new creates a timestamped RelaySnapshot.
+pub fn RelaySnapshot::new(metrics : RelayMetrics) -> RelaySnapshot {
+  {
+    collected_at_ms: @env.now().reinterpret_as_int64(),
+    metrics,
+  }
+}
