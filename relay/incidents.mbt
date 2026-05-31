@@ -99,3 +99,32 @@ fn severity_rank(severity : IncidentSeverity) -> Int {
     Critical => 2
   }
 }
+
+pub fn detect_incidents_with_capabilities(
+  report : AdminReport,
+  capabilities : BackendCapabilities,
+) -> Array[Incident] {
+  let incidents : Array[Incident] = []
+
+  match report.status {
+    Unhealthy => incidents.push(BackendUnavailable)
+    Degraded => incidents.push(WorkerFailures)
+    Healthy => ()
+  }
+
+  if capabilities.supports_dlq {
+    match report.dlq_size {
+      Some(size) if size > 0 => incidents.push(DeadLetterMessages)
+      _ => ()
+    }
+  }
+
+  if capabilities.supports_pending {
+    match report.pending_count {
+      Some(count) if count > 0L => incidents.push(PendingMessages)
+      _ => ()
+    }
+  }
+
+  incidents
+}

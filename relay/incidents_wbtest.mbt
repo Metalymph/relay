@@ -171,3 +171,44 @@ test "highest_severity_returns_highest_value" {
     _ => fail("Expected Critical")
   }
 }
+
+test "capability_aware_detection_ignores_pending_when_unsupported" {
+  let report : AdminReport = {
+    status: Healthy,
+    requires_attention: false,
+    queue_size: Some(0),
+    dlq_size: Some(0),
+    pending_count: Some(5L),
+    summary: "Healthy | queue=0 | dlq=0 | pending=5",
+  }
+
+  let incidents = detect_incidents_with_capabilities(
+    report,
+    BackendCapabilities::in_memory(),
+  )
+
+  assert_eq(incidents.length(), 0)
+}
+
+test "capability_aware_detection_detects_pending_when_supported" {
+  let report : AdminReport = {
+    status: Healthy,
+    requires_attention: false,
+    queue_size: Some(0),
+    dlq_size: Some(0),
+    pending_count: Some(5L),
+    summary: "Healthy | queue=0 | dlq=0 | pending=5",
+  }
+
+  let incidents = detect_incidents_with_capabilities(
+    report,
+    BackendCapabilities::redis_streams(),
+  )
+
+  assert_eq(incidents.length(), 1)
+
+  match incidents[0] {
+    PendingMessages => ()
+    _ => fail("Expected PendingMessages")
+  }
+}
