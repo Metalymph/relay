@@ -122,6 +122,27 @@ async fn[T] WorkerPool::start_single_worker(
 }
 
 ///|
+/// metrics returns the current worker processing counters.
+pub fn[T] WorkerPool::metrics(self : WorkerPool[T]) -> WorkerMetrics {
+  {
+    processed: self.stats.processed,
+    succeeded: self.stats.succeeded,
+    failed: self.stats.failed,
+
+    retries: self.stats.retries,
+    dlq_routed: self.stats.dlq_routed,
+
+    ack_failed: self.stats.ack_failed,
+    nack_failed: self.stats.nack_failed,
+
+    uptime_ms: self.stats.uptime_ms(),
+
+    last_success_at_ms: self.stats.last_success_at_ms,
+    last_failure_at_ms: self.stats.last_failure_at_ms,
+  }
+}
+
+///|
 /// now_ms returns current time in milliseconds since epoch.
 fn now_ms() -> Int64 {
   @env.now().reinterpret_as_int64()
