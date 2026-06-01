@@ -1,99 +1,102 @@
-# Changelog
+# [0.4.0] - 2026-06-XX
 
-All notable changes to this project will be documented in this file.
-
-The format is based on Keep a Changelog,
-and this project adheres to Semantic Versioning.
-
-## [0.3.0] - 2026-05-30
-
-### Added
-
-#### Valkey
-
-- Stream command helpers:
-  - XADD
-  - XGROUP CREATE
-  - XREADGROUP
-  - XREADGROUP BLOCK
-  - XACK
-  - XAUTOCLAIM
-  - XPENDING
-
-#### Relay
-
-- RedisStreamBackend
-- Consumer group support
-- Pending message recovery
-- Blocking stream consumption
-- Dead letter queue support
-- RelayQueue integration for streams
+## Added
 
 ### Reliability
 
-- At-least-once delivery semantics
-- Pending entry inspection
-- Pending entry recovery via XAUTOCLAIM
-- Dead-letter routing
+- Worker statistics tracking.
+- Worker metrics generation.
+- Worker uptime tracking.
+- Success and failure timestamps.
+- Ack failure tracking.
+- Nack failure tracking.
+- Dead-letter routing accounting.
 
-## [0.2.1] - 2026-05-30
+### Telemetry
 
-### Added
+- Backend health model.
+- Queue metrics.
+- Worker metrics.
+- RelayMetrics aggregation.
+- Telemetry collectors.
+- Telemetry snapshots.
 
-#### Valkey
+### Observability
 
-- Typed client helpers:
-  - ping()
-  - get()
-  - set()
-  - del()
-  - exists()
-- Native integration tests against a real Valkey server.
-- RESP parser coverage for:
-  - Errors
-  - Null bulk strings
-  - Empty bulk strings
-  - Null arrays
-  - Empty arrays
-  - Nested arrays
-  - Invalid protocol inputs
+- SystemStatus model.
+- Healthy state detection.
+- Degraded state detection.
+- Unhealthy state detection.
+- Snapshot inspection helpers.
+- Human-readable status messages.
 
-#### Relay
+### Operations
 
-- Functional Valkey-backed queue implementation.
-- Queue operations:
-  - push()
-  - blocking pop()
-  - non-blocking pop_nowait()
-  - size()
-- Integration tests for Valkey queue round-trips.
+- QueueInspection model.
+- Queue inspection helpers.
+- Queue summary generation.
+- Pending message inspection.
+- Dead-letter queue inspection.
 
-### Changed
+### Administrative Reporting
 
-#### Valkey
+- AdminReport model.
+- Administrative report generation.
+- Operational health evaluation.
+- Incident awareness helpers.
 
-- RESP command encoding now correctly uses UTF-8 byte lengths for bulk string payloads.
-- Improved RESP parser validation and protocol compliance.
+### Backend Capabilities
 
-#### Relay
+- BackendCapabilities model.
+- In-memory backend capabilities.
+- Redis backend capabilities.
+- Redis Streams backend capabilities.
+- Capability-aware feature detection.
 
-- RedisBackend now performs real queue operations using Valkey instead of placeholder mock implementations.
+### Incident Detection
 
-### Fixed
+- Incident model.
+- BackendUnavailable detection.
+- WorkerFailures detection.
+- DeadLetterMessages detection.
+- PendingMessages detection.
+- Capability-aware incident detection.
 
-#### Valkey
+### Incident Severity
 
-- Bulk string parsing now validates trailing CRLF terminators.
-- Improved handling of malformed RESP messages and unexpected end-of-stream conditions.
+- IncidentSeverity model.
+- Severity classification.
+- Severity aggregation.
+- Highest severity evaluation.
 
-## [0.1.0] - 2026-04-14
+### Export Models
 
-### Added
+- TelemetryEvent model.
+- OpenTelemetry-compatible record generation.
+- Prometheus-compatible metric generation.
 
-- Initial release of Metalymph/relay and Metalymph/valkey.
-- Native async Valkey/Redis client for MoonBit.
-- Distributed message queue (Relay) with pluggable backends.
-- InMemoryBackend for high-performance local queuing.
-- RedisBackend for distributed queuing using RESP client.
-- WorkerPool with concurrency management and automatic Ack/Nack logic.
-- GitHub Actions CI for automated build and test verification.
+## Changed
+
+### Relay
+
+- Improved public API consistency.
+- Expanded observability surface.
+- Improved operational inspection APIs.
+- Improved reliability reporting.
+
+### Documentation
+
+- Reworked README.
+- Added architecture documentation.
+- Added observability documentation.
+- Added operational reporting documentation.
+- Added telemetry pipeline documentation.
+
+### Testing
+
+- Added telemetry test coverage.
+- Added observability test coverage.
+- Added incident detection test coverage.
+- Added severity classification test coverage.
+- Added exporter model test coverage.
+- Expanded backend capability coverage.
