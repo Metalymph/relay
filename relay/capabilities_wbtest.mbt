@@ -13,6 +13,6 @@ test "in_memory_capabilities" {
   assert_true(caps.supports_ack)
   assert_true(caps.supports_dlq)
 
-  assert_false(caps.supports_pending)
+  assert_true(caps.supports_pending)
   assert_false(caps.supports_consumer_groups)
 }

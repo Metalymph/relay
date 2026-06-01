@@ -292,14 +292,26 @@ backend.capabilities()
 
 Capability examples:
 
-```text
 supports_ack
+supports_nack
 supports_dlq
 supports_pending
 supports_consumer_groups
 supports_health_checks
 supports_telemetry
-```
+
+Stream and backend-specific capability areas:
+
+supports_streams
+supports_subjects
+supports_pull_consumers
+supports_push_consumers
+supports_durable_consumers
+supports_redelivery
+supports_ordering
+supports_message_delay
+
+Capabilities are used by Relay to adapt operational inspection, incident detection, and backend-specific reporting without hard-coding backend behavior.
 
 ---
 
@@ -316,32 +328,47 @@ supports_telemetry
 ### v0.4.1
 
 - Valkey repository separation
+- MIT licensing alignment
 - Additional examples
 - Documentation refinements
 
 ### v0.5.x
 
 - NATS JetStream backend
+- NATS capability design
 - Stream-oriented capability extensions
-- JetStream operational integrations
+- JetStream operational mapping
+- JetStream incident and pending-message integration
 
 ### v0.6.x
+
+- Backend capability expansion
+- Backend abstraction refinement
+- Cross-backend delivery semantics documentation
+- Backend requirements documentation
+- Operational model hardening after NATS integration
+
+### v0.7.x
 
 - RabbitMQ backend
 - AMQP capability extensions
 - Queue topology support
+- Exchange/routing-key mapping
 
-### v0.7.x
+### v0.8.x
 
 - Kafka backend
 - Partition-aware capabilities
 - Consumer group integrations
+- Offset-oriented operational mapping
 
 ### Future
 
+- Amazon SQS backend
 - Native OpenTelemetry integrations
 - Native Prometheus integrations
 - Additional backend ecosystem
+- Monitoring dashboards
 
 ---
 

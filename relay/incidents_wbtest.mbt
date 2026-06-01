@@ -182,9 +182,27 @@ test "capability_aware_detection_ignores_pending_when_unsupported" {
     summary: "Healthy | queue=0 | dlq=0 | pending=5",
   }
 
+  let unsupported_caps = BackendCapabilities::{
+    supports_ack: true,
+    supports_nack: true,
+    supports_dlq: true,
+    supports_pending: false,
+    supports_consumer_groups: false,
+    supports_streams: false,
+    supports_subjects: false,
+    supports_pull_consumers: false,
+    supports_push_consumers: false,
+    supports_durable_consumers: false,
+    supports_redelivery: false,
+    supports_ordering: false,
+    supports_message_delay: false,
+    supports_health_checks: true,
+    supports_telemetry: true,
+  }
+
   let incidents = detect_incidents_with_capabilities(
     report,
-    BackendCapabilities::in_memory(),
+    unsupported_caps,
   )
 
   assert_eq(incidents.length(), 0)
