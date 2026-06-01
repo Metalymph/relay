@@ -286,15 +286,30 @@ relay_severity
 
 Relay does not assume identical backend behavior.
 
-moonbit backend.capabilities()
+```moonbit
+backend.capabilities()
+```
 
 Capability examples:
 
-text supports_ack supports_nack supports_dlq supports_pending supports_consumer_groups supports_health_checks supports_telemetry
+supports_ack
+supports_nack
+supports_dlq
+supports_pending
+supports_consumer_groups
+supports_health_checks
+supports_telemetry
 
-Future backend capability areas:
+Stream and backend-specific capability areas:
 
-text supports_streams supports_subjects supports_pull_consumers supports_push_consumers supports_durable_consumers supports_redelivery supports_ordering supports_message_delay
+supports_streams
+supports_subjects
+supports_pull_consumers
+supports_push_consumers
+supports_durable_consumers
+supports_redelivery
+supports_ordering
+supports_message_delay
 
 Capabilities are used by Relay to adapt operational inspection, incident detection, and backend-specific reporting without hard-coding backend behavior.
 
