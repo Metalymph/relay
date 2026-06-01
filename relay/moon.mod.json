@@ -3,11 +3,11 @@
   "version": "0.4.1",
   "deps": {
     "moonbitlang/async": "0.17.1",
-    "Metalymph/valkey": "0.4.0"
+    "Metalymph/valkey": "0.4.1"
   },
   "readme": "README.mbt.md",
   "repository": "https://github.com/Metalymph/relay",
-  "license": "Apache-2.0",
+  "license": "MIT",
   "keywords": [],
   "description": "Distributed message queue with V3 reliability and Valkey support"
 }
