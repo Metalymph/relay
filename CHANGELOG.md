@@ -1,8 +1,27 @@
-# [0.4.0] - 2026-06-XX
+# [0.4.1] - 2026-06-01
 
-## Added
+## Changed
 
-### Reliability
+### Repository Structure
+
+- Removed the embedded Valkey package from the Relay repository.
+- Relay now depends on the published `Metalymph/valkey` package.
+
+### Documentation
+
+- Added architecture and contribution guides.
+- Improved project documentation.
+
+### Internal
+
+- Simplified workspace layout.
+- Reduced repository coupling between Relay and Valkey.
+
+## [0.4.0] - 2026-06-01
+
+### Added
+
+#### Reliability
 
 - Worker statistics tracking.
 - Worker metrics generation.
@@ -12,7 +31,7 @@
 - Nack failure tracking.
 - Dead-letter routing accounting.
 
-### Telemetry
+#### Telemetry
 
 - Backend health model.
 - Queue metrics.
@@ -21,7 +40,7 @@
 - Telemetry collectors.
 - Telemetry snapshots.
 
-### Observability
+#### Observability
 
 - SystemStatus model.
 - Healthy state detection.
@@ -30,7 +49,7 @@
 - Snapshot inspection helpers.
 - Human-readable status messages.
 
-### Operations
+#### Operations
 
 - QueueInspection model.
 - Queue inspection helpers.
@@ -38,14 +57,14 @@
 - Pending message inspection.
 - Dead-letter queue inspection.
 
-### Administrative Reporting
+#### Administrative Reporting
 
 - AdminReport model.
 - Administrative report generation.
 - Operational health evaluation.
 - Incident awareness helpers.
 
-### Backend Capabilities
+#### Backend Capabilities
 
 - BackendCapabilities model.
 - In-memory backend capabilities.
@@ -53,7 +72,7 @@
 - Redis Streams backend capabilities.
 - Capability-aware feature detection.
 
-### Incident Detection
+#### Incident Detection
 
 - Incident model.
 - BackendUnavailable detection.
@@ -62,29 +81,29 @@
 - PendingMessages detection.
 - Capability-aware incident detection.
 
-### Incident Severity
+#### Incident Severity
 
 - IncidentSeverity model.
 - Severity classification.
 - Severity aggregation.
 - Highest severity evaluation.
 
-### Export Models
+#### Export Models
 
 - TelemetryEvent model.
 - OpenTelemetry-compatible record generation.
 - Prometheus-compatible metric generation.
 
-## Changed
+###  Changed
 
-### Relay
+#### Relay
 
 - Improved public API consistency.
 - Expanded observability surface.
 - Improved operational inspection APIs.
 - Improved reliability reporting.
 
-### Documentation
+#### Documentation
 
 - Reworked README.
 - Added architecture documentation.
@@ -92,7 +111,7 @@
 - Added operational reporting documentation.
 - Added telemetry pipeline documentation.
 
-### Testing
+#### Testing
 
 - Added telemetry test coverage.
 - Added observability test coverage.
