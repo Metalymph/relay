@@ -1,0 +1,43 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "Metalymph/relay/worker"
+
+import {
+  "Metalymph/relay/core",
+}
+
+// Values
+pub async fn[T] start_worker(@core.RelayQueue[T], (@core.Message[T]) -> Unit) -> Unit
+
+// Errors
+
+// Types and methods
+pub struct WorkerPool[T] {
+  queue : @core.RelayQueue[T]
+  concurrency : Int
+  stats : WorkerStats
+}
+pub fn[T] WorkerPool::metrics(Self[T]) -> @core.WorkerMetrics
+pub fn[T] WorkerPool::new(@core.RelayQueue[T], concurrency~ : Int) -> Self[T]
+pub async fn[T] WorkerPool::run(Self[T], async (T) -> Unit) -> Unit
+pub fn[T] WorkerPool::stats(Self[T]) -> WorkerStats
+
+pub struct WorkerStats {
+  mut processed : Int
+  mut succeeded : Int
+  mut failed : Int
+  mut retries : Int
+  mut dlq_routed : Int
+  mut ack_failed : Int
+  mut nack_failed : Int
+  started_at_ms : Int64
+  mut last_success_at_ms : Int64?
+  mut last_failure_at_ms : Int64?
+}
+pub fn WorkerStats::has_failures(Self) -> Bool
+pub fn WorkerStats::new() -> Self
+pub fn WorkerStats::uptime_ms(Self) -> Int64
+
+// Type aliases
+
+// Traits
+

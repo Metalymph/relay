@@ -1,0 +1,47 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "Metalymph/relay/memory"
+
+import {
+  "Metalymph/relay/core",
+  "moonbitlang/async/aqueue",
+  "moonbitlang/core/hashmap",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct Dashboard[T] {
+  queue : @core.RelayQueue[T]
+  backend : InMemoryBackend[T]
+}
+pub fn[T] Dashboard::new(@core.RelayQueue[T], InMemoryBackend[T]) -> Self[T]
+pub fn[T] Dashboard::render(Self[T]) -> Unit
+pub fn[T] Dashboard::start_auto_render(Self[T]) -> Unit
+
+pub struct InMemoryBackend[T] {
+  queue : @aqueue.Queue[@core.Message[T]]
+  dlq : @aqueue.Queue[@core.Message[T]]
+  in_flight : @hashmap.HashMap[String, @core.Message[T]]
+  policy : @core.RetryPolicy
+  mut next_id : Int
+  mut count : Int
+  mut dlq_count : Int
+}
+pub fn[T] InMemoryBackend::ack(Self[T], String) -> Unit
+pub fn[T] InMemoryBackend::capabilities(Self[T]) -> @core.BackendCapabilities
+pub fn[T] InMemoryBackend::dlq_size(Self[T]) -> Int
+pub fn[T] InMemoryBackend::health(Self[T]) -> @core.BackendHealth
+pub async fn[T] InMemoryBackend::nack(Self[T], String) -> @core.NackResult
+pub fn[T] InMemoryBackend::new(Int, policy? : @core.RetryPolicy) -> Self[T]
+pub async fn[T] InMemoryBackend::pop(Self[T]) -> @core.Message[T]
+pub async fn[T] InMemoryBackend::push(Self[T], T) -> Unit
+pub fn[T] InMemoryBackend::queue_metrics(Self[T]) -> @core.QueueMetrics
+pub fn[T] InMemoryBackend::size(Self[T]) -> Int
+pub fn[T] InMemoryBackend::to_relay_queue(Self[T]) -> @core.RelayQueue[T]
+
+// Type aliases
+
+// Traits
+

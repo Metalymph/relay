@@ -1,0 +1,212 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "Metalymph/relay/core"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn collect(WorkerMetrics?, QueueMetrics?, BackendHealth?) -> RelayMetrics
+
+pub fn collect_queue(QueueMetrics, BackendHealth) -> RelayMetrics
+
+pub fn collect_snapshot(WorkerMetrics?, QueueMetrics?, BackendHealth?) -> RelaySnapshot
+
+pub fn collect_worker(WorkerMetrics, BackendHealth) -> RelayMetrics
+
+pub fn detect_incidents(AdminReport) -> Array[Incident]
+
+pub fn detect_incidents_with_capabilities(AdminReport, BackendCapabilities) -> Array[Incident]
+
+pub fn from_report(AdminReport, Array[Incident]) -> TelemetryEvent
+
+pub fn has_incidents(AdminReport) -> Bool
+
+pub fn highest_severity(Array[Incident]) -> IncidentSeverity?
+
+pub fn incident_count(AdminReport) -> Int
+
+pub fn inspect(RelaySnapshot) -> QueueInspection
+
+pub fn report(QueueInspection) -> AdminReport
+
+// Errors
+pub(all) suberror QueueError {
+  OperationFailed(String)
+} derive(ToJson, @debug.Debug)
+
+// Types and methods
+pub struct AdminReport {
+  status : SystemStatus
+  requires_attention : Bool
+  queue_size : Int?
+  dlq_size : Int?
+  pending_count : Int64?
+  summary : String
+}
+pub fn AdminReport::has_incidents(Self) -> Bool
+pub fn AdminReport::is_healthy(Self) -> Bool
+
+pub struct BackendCapabilities {
+  supports_ack : Bool
+  supports_nack : Bool
+  supports_dlq : Bool
+  supports_pending : Bool
+  supports_consumer_groups : Bool
+  supports_streams : Bool
+  supports_subjects : Bool
+  supports_pull_consumers : Bool
+  supports_push_consumers : Bool
+  supports_durable_consumers : Bool
+  supports_redelivery : Bool
+  supports_ordering : Bool
+  supports_message_delay : Bool
+  supports_health_checks : Bool
+  supports_telemetry : Bool
+}
+pub fn BackendCapabilities::in_memory() -> Self
+pub fn BackendCapabilities::redis_lists() -> Self
+pub fn BackendCapabilities::redis_streams() -> Self
+
+pub(all) struct BackendHealth {
+  healthy : Bool
+  message : String?
+}
+
+pub enum Incident {
+  BackendUnavailable
+  WorkerFailures
+  DeadLetterMessages
+  PendingMessages
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Incident::severity(Self) -> IncidentSeverity
+
+pub enum IncidentSeverity {
+  Info
+  Warning
+  Critical
+} derive(Eq, ToJson, @debug.Debug)
+pub fn IncidentSeverity::to_string(Self) -> String
+
+pub struct Message[T] {
+  id : String
+  payload : T
+  mut attempt_count : Int
+}
+pub fn[T] Message::attempt_count(Self[T]) -> Int
+pub fn[T] Message::increment_attempt(Self[T]) -> Unit
+pub fn[T] Message::new(String, T, attempt_count? : Int) -> Self[T]
+
+pub(all) enum NackResult {
+  Requeued
+  SentToDlq
+}
+
+pub struct OtelAttribute {
+  key : String
+  value : String
+}
+
+pub struct OtelRecord {
+  name : String
+  timestamp_ms : Int64
+  attributes : Array[OtelAttribute]
+}
+
+pub struct PrometheusMetric {
+  name : String
+  value : Float
+}
+
+pub struct QueueInspection {
+  status : SystemStatus
+  queue_size : Int?
+  dlq_size : Int?
+  pending_count : Int64?
+  backend_healthy : Bool
+}
+pub fn QueueInspection::has_dlq(Self) -> Bool
+pub fn QueueInspection::has_pending(Self) -> Bool
+pub fn QueueInspection::is_empty(Self) -> Bool
+pub fn QueueInspection::summary(Self) -> String
+
+pub(all) struct QueueMetrics {
+  size : Int?
+  dlq_size : Int?
+  pending_count : Int64?
+}
+
+pub(all) struct RelayMetrics {
+  worker : WorkerMetrics?
+  queue : QueueMetrics?
+  health : BackendHealth?
+}
+
+pub struct RelayQueue[T] {
+  push_fn : async (T) -> Unit
+  pop_fn : async () -> Message[T]
+  ack_fn : async (String) -> Unit
+  nack_fn : async (String) -> NackResult
+  size_fn : () -> Int
+}
+pub async fn[T] RelayQueue::ack(Self[T], String) -> Unit
+pub async fn[T] RelayQueue::nack(Self[T], String) -> NackResult
+pub fn[T] RelayQueue::new(push~ : async (T) -> Unit, pop~ : async () -> Message[T], ack~ : async (String) -> Unit, nack~ : async (String) -> NackResult, size~ : () -> Int) -> Self[T]
+pub async fn[T] RelayQueue::pop(Self[T]) -> Message[T]
+pub async fn[T] RelayQueue::push(Self[T], T) -> Unit
+pub fn[T] RelayQueue::size(Self[T]) -> Int
+
+pub(all) struct RelaySnapshot {
+  collected_at_ms : Int64
+  metrics : RelayMetrics
+}
+pub fn RelaySnapshot::dlq_size(Self) -> Int?
+pub fn RelaySnapshot::has_failures(Self) -> Bool
+pub fn RelaySnapshot::is_healthy(Self) -> Bool
+pub fn RelaySnapshot::new(RelayMetrics) -> Self
+pub fn RelaySnapshot::pending_count(Self) -> Int64?
+pub fn RelaySnapshot::queue_size(Self) -> Int?
+pub fn RelaySnapshot::requires_attention(Self) -> Bool
+pub fn RelaySnapshot::status(Self) -> SystemStatus
+pub fn RelaySnapshot::status_message(Self) -> String
+
+pub struct RetryPolicy {
+  max_attempts : Int
+}
+pub fn RetryPolicy::default() -> Self
+pub fn RetryPolicy::new(Int) -> Self
+
+pub(all) enum SystemStatus {
+  Healthy
+  Degraded
+  Unhealthy
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SystemStatus::to_string(Self) -> String
+
+pub struct TelemetryEvent {
+  timestamp_ms : Int64
+  status : SystemStatus
+  severity : IncidentSeverity?
+  incident_count : Int
+  summary : String
+}
+pub fn TelemetryEvent::to_otel_record(Self) -> OtelRecord
+pub fn TelemetryEvent::to_prometheus_metrics(Self) -> Array[PrometheusMetric]
+
+pub(all) struct WorkerMetrics {
+  processed : Int
+  succeeded : Int
+  failed : Int
+  retries : Int
+  dlq_routed : Int
+  ack_failed : Int
+  nack_failed : Int
+  uptime_ms : Int64
+  last_success_at_ms : Int64?
+  last_failure_at_ms : Int64?
+}
+
+// Type aliases
+
+// Traits
+

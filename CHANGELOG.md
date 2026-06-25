@@ -1,3 +1,15 @@
+# [0.5.0] - 2026-06-25
+
+## Changed
+
+### Repository Architecture
+- Separated `relay` into `Metalymph/relay/core`, `Metalymph/relay/memory`, and `Metalymph/relay/worker` packages for explicit modular imports.
+- Moved Valkey (Redis) backend adapters to the `Metalymph/valkey` repository.
+
+### Maintenance
+- Upgraded the codebase to be fully compatible with MoonBit 0.10.
+- Resolved various unused dependencies and syntactic deprecations.
+
 # [0.4.1] - 2026-06-01
 
 ## Changed

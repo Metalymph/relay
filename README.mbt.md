@@ -32,8 +32,10 @@ Built on top of the `moonbitlang/async` runtime.
 ### Available
 
 - InMemoryBackend
-- RedisBackend (Lists)
-- RedisStreamBackend (Streams + Consumer Groups)
+
+### External Adapters
+
+- Valkey/Redis (available in the [`Metalymph/valkey`](https://github.com/Metalymph/valkey) repository)
 
 ### Planned
 
@@ -51,15 +53,21 @@ Add Relay to your MoonBit project:
 ```json
 {
   "deps": {
-    "Metalymph/relay": "latest"
+    "Metalymph/relay": "0.5.0"
   }
 }
 ```
 
-Import:
+Since Relay is modular, you must explicitly import the packages you need in your `moon.pkg`:
 
-```moonbit
-import "Metalymph/relay"
+```json
+{
+  "import": [
+    "Metalymph/relay/core",
+    "Metalymph/relay/memory",
+    "Metalymph/relay/worker"
+  ]
+}
 ```
 
 ---
@@ -69,11 +77,9 @@ import "Metalymph/relay"
 ### In-Memory Queue
 
 ```moonbit
-import "Metalymph/relay"
-
-let backend = relay.InMemoryBackend::new(
+let backend = @memory.InMemoryBackend::new(
   100,
-  policy=relay.RetryPolicy::default(),
+  policy=@core.RetryPolicy::default(),
 )
 
 let queue = backend.to_relay_queue()
@@ -89,7 +95,7 @@ println(msg.payload)
 ### Worker Pool
 
 ```moonbit
-let pool = relay.WorkerPool::new(
+let pool = @worker.WorkerPool::new(
   queue,
   concurrency=4,
 )
