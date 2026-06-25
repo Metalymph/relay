@@ -40,9 +40,6 @@ Built on top of the `moonbitlang/async` runtime.
 ### Planned
 
 - NATS JetStream
-- RabbitMQ
-- Kafka
-- Amazon SQS
 
 ---
 
@@ -331,49 +328,23 @@ Capabilities are used by Relay to adapt operational inspection, incident detecti
 
 ## Roadmap
 
-### v0.4.1
+### v0.5.0 (Current)
 
+- Modular repository architecture (core, memory, worker)
 - Valkey repository separation
-- MIT licensing alignment
-- Additional examples
-- Documentation refinements
-
-### v0.5.x
-
-- NATS JetStream backend
-- NATS capability design
-- Stream-oriented capability extensions
-- JetStream operational mapping
-- JetStream incident and pending-message integration
+- MoonBit 0.10 upgrade and stabilization
 
 ### v0.6.x
 
-- Backend capability expansion
-- Backend abstraction refinement
-- Cross-backend delivery semantics documentation
-- Backend requirements documentation
-- Operational model hardening after NATS integration
+- NATS JetStream backend integration (as a separate package/repository)
+- NATS capability design and stream-oriented capability extensions
+- JetStream operational mapping and incident integration
 
-### v0.7.x
+### Future Possibilities
 
 - RabbitMQ backend
-- AMQP capability extensions
-- Queue topology support
-- Exchange/routing-key mapping
-
-### v0.8.x
-
-- Kafka backend
-- Partition-aware capabilities
-- Consumer group integrations
-- Offset-oriented operational mapping
-
-### Future
-
-- Amazon SQS backend
-- Native OpenTelemetry integrations
-- Native Prometheus integrations
-- Additional backend ecosystem
+- Backend requirement specifications
+- Native OpenTelemetry/Prometheus integrations
 - Monitoring dashboards
 
 ---
